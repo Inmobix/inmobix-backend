@@ -21,7 +21,7 @@ public class User {
 
     @NotBlank(message = "El nombre es obligatorio")
     @Column(nullable = false)
-    private String nombre;
+    private String name;
 
     @NotBlank(message = "El email es obligatorio")
     @Email(message = "Debe ser un email válido")
@@ -36,7 +36,7 @@ public class User {
     @Column(nullable = false)
     private String password;
 
-    private String telefono; // opcional
+    private String phone;
 
-    private LocalDate fechaNacimiento; // opcional
+    private LocalDate birthDate;
 }
