@@ -4,6 +4,7 @@ import com.inmobix.backend.dto.UserRequest;
 import com.inmobix.backend.dto.UserResponse;
 import com.inmobix.backend.model.User;
 import com.inmobix.backend.repository.UserRepository;
+import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 import java.util.Optional;
 
@@ -11,9 +12,11 @@ import java.util.Optional;
 public class UserService {
 
     private final UserRepository repository;
+    private final PasswordEncoder passwordEncoder;
 
-    public UserService(UserRepository repository) {
+    public UserService(UserRepository repository, PasswordEncoder passwordEncoder) {
         this.repository = repository;
+        this.passwordEncoder = passwordEncoder;
     }
 
     // Registrar un nuevo usuario
@@ -26,7 +29,7 @@ public class UserService {
         entity.setName(request.getName());
         entity.setEmail(request.getEmail());
         entity.setUsername(request.getUsername());
-        entity.setPassword(request.getPassword());
+        entity.setPassword(passwordEncoder.encode(request.getPassword()));
         entity.setPhone(request.getPhone());
         entity.setBirthDate(request.getBirthDate());
 
@@ -42,7 +45,7 @@ public class UserService {
     }
 
     // Login
-    public String login(String email, String password) {
+    public String login(String email, String rawPassword) {
         Optional<User> userOpt = repository.findByEmail(email);
 
         if (userOpt.isEmpty()) {
@@ -51,7 +54,7 @@ public class UserService {
 
         User user = userOpt.get();
 
-        if (!user.getPassword().equals(password)) {
+        if (!passwordEncoder.matches(rawPassword, user.getPassword())) {
             throw new RuntimeException("Contraseña incorrecta para el usuario: " + email);
         }
 
