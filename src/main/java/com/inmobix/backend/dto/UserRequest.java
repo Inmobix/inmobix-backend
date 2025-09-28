@@ -1,39 +1,28 @@
-package com.inmobix.backend.model;
+package com.inmobix.backend.dto;
 
-import java.time.LocalDate;
-import jakarta.persistence.*;
 import jakarta.validation.constraints.Email;
 import jakarta.validation.constraints.NotBlank;
 import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.NoArgsConstructor;
+import java.time.LocalDate;
 
-@Entity
-@Table(name = "users")
 @Data
 @AllArgsConstructor
 @NoArgsConstructor
-public class User {
-
-    @Id
-    @GeneratedValue(strategy = GenerationType.IDENTITY)
-    private Long id;
+public class UserRequest {
 
     @NotBlank(message = "El nombre es obligatorio")
-    @Column(nullable = false)
     private String name;
 
     @NotBlank(message = "El email es obligatorio")
     @Email(message = "Debe ser un email válido")
-    @Column(nullable = false, unique = true)
     private String email;
 
     @NotBlank(message = "El username es obligatorio")
-    @Column(nullable = false, unique = true)
     private String username;
 
     @NotBlank(message = "La contraseña es obligatoria")
-    @Column(nullable = false)
     private String password;
 
     private String phone;
