@@ -6,6 +6,7 @@ import com.inmobix.backend.service.UserService;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
+import java.util.List;
 
 @RestController
 @RequestMapping("/api")
@@ -44,4 +45,11 @@ public class UserController {
         UserResponse response = userService.getById(id);
         return ResponseEntity.ok(response);
     }
+
+    // GET /users
+    @GetMapping("/users")
+    public ResponseEntity<List<UserResponse>> getAllUsers() {
+        return ResponseEntity.ok(userService.getAll());
+    }
+
 }
