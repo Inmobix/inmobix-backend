@@ -42,28 +42,29 @@ public class UserService {
     }
 
     // Login
-    public UserResponse login(String email, String password) {
+    public String login(String email, String password) {
         Optional<User> userOpt = repository.findByEmail(email);
-        if (userOpt.isEmpty() || !userOpt.get().getPassword().equals(password)) {
-            throw new RuntimeException("Credenciales inválidas");
+
+        if (userOpt.isEmpty()) {
+            throw new RuntimeException("Usuario no encontrado con el email: " + email);
         }
+
         User user = userOpt.get();
-        return new UserResponse(
-                user.getId(),
-                user.getName(),
-                user.getEmail(),
-                user.getUsername(),
-                user.getPhone(),
-                user.getBirthDate()
-        );
+
+        if (!user.getPassword().equals(password)) {
+            throw new RuntimeException("Contraseña incorrecta para el usuario: " + email);
+        }
+
+        return "Login exitoso para el usuario " + user.getUsername();
     }
 
     // Recuperar contraseña
-    public void forgotPassword(String email) {
+    public String forgotPassword(String email) {
         Optional<User> userOpt = repository.findByEmail(email);
         if (userOpt.isEmpty()) {
             throw new RuntimeException("Usuario no encontrado con el email: " + email);
         }
+        return "Se ha enviado un enlace de recuperación al correo " + email;
     }
 
     // Buscar usuario por id
