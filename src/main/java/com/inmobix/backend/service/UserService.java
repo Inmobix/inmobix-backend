@@ -6,7 +6,9 @@ import com.inmobix.backend.model.User;
 import com.inmobix.backend.repository.UserRepository;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
+import java.util.List;
 import java.util.Optional;
+import java.util.stream.Collectors;
 
 @Service
 public class UserService {
@@ -81,5 +83,20 @@ public class UserService {
                 entity.getPhone(),
                 entity.getBirthDate()
         );
+    }
+
+    // Listar todos los usuarios
+    public List<UserResponse> getAll() {
+        return repository.findAll()
+                .stream()
+                .map(user -> new UserResponse(
+                        user.getId(),
+                        user.getName(),
+                        user.getEmail(),
+                        user.getUsername(),
+                        user.getPhone(),
+                        user.getBirthDate()
+                ))
+                .collect(Collectors.toList());
     }
 }
