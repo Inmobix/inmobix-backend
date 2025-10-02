@@ -1,5 +1,7 @@
 # Controlador AndresGomezController
 
+*Ruta:* com.inmobix.backend.playground.andres.controller
+
 Controlador REST que maneja una lista de tareas usando los métodos HTTP básicos.
 
 Ruta base: /andresgomez/tareas

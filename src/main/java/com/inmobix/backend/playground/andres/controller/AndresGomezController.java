@@ -1,4 +1,4 @@
-package com.inmobix.backend.controller.playground;
+package com.inmobix.backend.playground.andres.controller;
 
 import org.springframework.web.bind.annotation.*;
 import java.util.ArrayList;
