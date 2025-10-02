@@ -14,7 +14,7 @@ import lombok.NoArgsConstructor;
 @Data
 @AllArgsConstructor
 @NoArgsConstructor
-public class UserClass {
+public class UserClassJDPY {
     @Id
     @GeneratedValue( strategy = GenerationType.IDENTITY)
     private Long id;
