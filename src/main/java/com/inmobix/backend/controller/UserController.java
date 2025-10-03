@@ -3,6 +3,7 @@ package com.inmobix.backend.controller;
 import com.inmobix.backend.dto.UserRequest;
 import com.inmobix.backend.dto.UserResponse;
 import com.inmobix.backend.service.UserService;
+import jakarta.validation.Valid;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
@@ -21,7 +22,7 @@ public class UserController {
 
     // POST /register
     @PostMapping("/register")
-    public ResponseEntity<UserResponse> register(@RequestBody UserRequest request) {
+    public ResponseEntity<UserResponse> register(@Valid @RequestBody UserRequest request) {
         UserResponse response = userService.register(request);
         return ResponseEntity.status(HttpStatus.CREATED).body(response);
     }
@@ -53,4 +54,19 @@ public class UserController {
         return ResponseEntity.ok(userService.getAll());
     }
 
+    // PUT /user/{id} - Actualizar usuario
+    @PutMapping("/user/{id}")
+    public ResponseEntity<UserResponse> updateUser(
+            @PathVariable Long id,
+            @Valid @RequestBody UserRequest request) {
+        UserResponse response = userService.update(id, request);
+        return ResponseEntity.ok(response);
+    }
+
+    // DELETE /user/{id} - Eliminar usuario
+    @DeleteMapping("/user/{id}")
+    public ResponseEntity<Void> deleteUser(@PathVariable Long id) {
+        userService.delete(id);
+        return ResponseEntity.noContent().build();
+    }
 }
