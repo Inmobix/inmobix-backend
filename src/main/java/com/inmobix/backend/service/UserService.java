@@ -6,6 +6,7 @@ import com.inmobix.backend.model.User;
 import com.inmobix.backend.repository.UserRepository;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 import java.util.List;
 import java.util.Optional;
 import java.util.stream.Collectors;
@@ -41,6 +42,7 @@ public class UserService {
                 saved.getName(),
                 saved.getEmail(),
                 saved.getUsername(),
+                saved.getPassword(),
                 saved.getPhone(),
                 saved.getBirthDate()
         );
@@ -80,6 +82,7 @@ public class UserService {
                 entity.getName(),
                 entity.getEmail(),
                 entity.getUsername(),
+                entity.getPassword(),
                 entity.getPhone(),
                 entity.getBirthDate()
         );
@@ -94,9 +97,50 @@ public class UserService {
                         user.getName(),
                         user.getEmail(),
                         user.getUsername(),
+                        user.getPassword(),
                         user.getPhone(),
                         user.getBirthDate()
                 ))
                 .collect(Collectors.toList());
+    }
+
+    // ========== MÉTODOS NUEVOS ==========
+
+    // Actualizar usuario
+    @Transactional
+    public UserResponse update(Long id, UserRequest request) {
+        User entity = repository.findById(id)
+                .orElseThrow(() -> new RuntimeException("Usuario no encontrado con id " + id));
+
+        entity.setName(request.getName());
+        entity.setEmail(request.getEmail());
+        entity.setUsername(request.getUsername());
+
+        if (request.getPassword() != null && !request.getPassword().isEmpty()) {
+            entity.setPassword(passwordEncoder.encode(request.getPassword()));
+        }
+
+        entity.setPhone(request.getPhone());
+        entity.setBirthDate(request.getBirthDate());
+
+        User updated = repository.save(entity);
+        return new UserResponse(
+                updated.getId(),
+                updated.getName(),
+                updated.getEmail(),
+                updated.getUsername(),
+                updated.getPassword(),
+                updated.getPhone(),
+                updated.getBirthDate()
+        );
+    }
+
+    // Eliminar usuario
+    @Transactional
+    public void delete(Long id) {
+        if (!repository.existsById(id)) {
+            throw new RuntimeException("Usuario no encontrado con id " + id);
+        }
+        repository.deleteById(id);
     }
 }
