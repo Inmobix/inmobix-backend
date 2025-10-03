@@ -201,7 +201,7 @@ inmobix-backend/
 
 | Fecha | Ticket | Cambio | Autor |
 |-------|--------|--------|-------|
-| 03/10/2025 | INB-18 | Agregar métodos PUT y DELETE en UserController y UserService | Andrés Gómez |
+| 03/10/2025 | INB-28 | Agregar métodos PUT y DELETE en UserController y UserService | Andrés Gómez |
 | 02/10/2025 | INB-20 | Completar/Actualizar README backend | Jordy Prada Yanes |
 | 02/10/2025 | INB-19 | Redactar README inicial backend | Jordy Prada Yanes |
 | 02/10/2025 | INB-17 | Configurar H2 y cargar datos de prueba | Jordy Prada Yanes |
