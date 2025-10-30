@@ -1,6 +1,7 @@
 package com.inmobix.backend.model;
 
 import java.time.LocalDate;
+import java.util.UUID;
 import jakarta.persistence.*;
 import jakarta.validation.constraints.Email;
 import jakarta.validation.constraints.NotBlank;
@@ -16,8 +17,8 @@ import lombok.NoArgsConstructor;
 public class User {
 
     @Id
-    @GeneratedValue(strategy = GenerationType.IDENTITY)
-    private Long id;
+    @GeneratedValue
+    private UUID id;
 
     @NotBlank(message = "El nombre es obligatorio")
     @Column(nullable = false)
@@ -39,4 +40,8 @@ public class User {
     private String phone;
 
     private LocalDate birthDate;
+
+    @Enumerated(EnumType.STRING)
+    @Column(nullable = false)
+    private Role role = Role.USER; // Valor por defecto
 }

@@ -9,6 +9,7 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 import java.math.BigDecimal;
 import java.util.List;
+import java.util.UUID;
 
 @RestController
 @RequestMapping("/api/properties")
@@ -91,7 +92,8 @@ public class PropertyController {
 
     // GET /api/properties/user/{userId} - Buscar propiedades de un usuario
     @GetMapping("/user/{userId}")
-    public ResponseEntity<List<PropertyResponse>> getPropertiesByUser(@PathVariable Long userId) {
+    public ResponseEntity<List<PropertyResponse>> getPropertiesByUser(@PathVariable UUID userId) {
         return ResponseEntity.ok(propertyService.getByUserId(userId));
     }
+
 }

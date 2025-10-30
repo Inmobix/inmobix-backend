@@ -7,7 +7,9 @@ import jakarta.validation.Valid;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
+
 import java.util.List;
+import java.util.UUID;
 
 @RestController
 @RequestMapping("/api")
@@ -30,6 +32,9 @@ public class UserController {
     // POST /login
     @PostMapping("/login")
     public ResponseEntity<String> login(@RequestBody UserRequest request) {
+        if (request.getEmail() == null || request.getPassword() == null) {
+            return ResponseEntity.badRequest().body("Email y contraseña son obligatorios");
+        }
         String result = userService.login(request.getEmail(), request.getPassword());
         return ResponseEntity.ok(result);
     }
@@ -37,13 +42,16 @@ public class UserController {
     // POST /forgot-password
     @PostMapping("/forgot-password")
     public ResponseEntity<String> forgotPassword(@RequestBody UserRequest request) {
+        if (request.getEmail() == null) {
+            return ResponseEntity.badRequest().body("El email es obligatorio");
+        }
         String result = userService.forgotPassword(request.getEmail());
         return ResponseEntity.ok(result);
     }
 
     // GET /user/{id}
     @GetMapping("/user/{id}")
-    public ResponseEntity<UserResponse> getById(@PathVariable Long id) {
+    public ResponseEntity<UserResponse> getById(@PathVariable UUID id) {
         UserResponse response = userService.getById(id);
         return ResponseEntity.ok(response);
     }
@@ -57,7 +65,7 @@ public class UserController {
     // PUT /user/{id} - Actualizar usuario
     @PutMapping("/user/{id}")
     public ResponseEntity<UserResponse> updateUser(
-            @PathVariable Long id,
+            @PathVariable UUID id,
             @Valid @RequestBody UserRequest request) {
         UserResponse response = userService.update(id, request);
         return ResponseEntity.ok(response);
@@ -65,7 +73,7 @@ public class UserController {
 
     // DELETE /user/{id} - Eliminar usuario
     @DeleteMapping("/user/{id}")
-    public ResponseEntity<Void> deleteUser(@PathVariable Long id) {
+    public ResponseEntity<Void> deleteUser(@PathVariable UUID id) {
         userService.delete(id);
         return ResponseEntity.noContent().build();
     }

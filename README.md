@@ -8,15 +8,16 @@ Inmobix es una aplicación backend para una plataforma inmobiliaria. Permite a l
 
 La entidad `User` representa un usuario de la plataforma.
 
-| Atributo  | Tipo      | Descripción                                       | Restricciones              |
-|-----------|-----------|---------------------------------------------------|----------------------------|
-| id        | Long      | Identificador único del usuario                   | Primary Key, Auto-generado |
-| name      | String    | Nombre completo del usuario                       | Not Blank                  |
-| email     | String    | Correo electrónico del usuario                    | Not Blank, Valid Email, Unique |
-| username  | String    | Nombre de usuario para iniciar sesión             | Not Blank, Unique          |
-| password  | String    | Contraseña del usuario                            | Not Blank                  |
-| phone     | String    | Número de teléfono del usuario                    | Opcional                   |
-| birthDate | LocalDate | Fecha de nacimiento del usuario                   | Opcional                   |
+| Atributo  | Tipo      | Descripción                           | Restricciones             |
+|-----------|-----------|---------------------------------------|---------------------------|
+| id        | UUID      | Identificador único del usuario       | Primary Key, Auto-generado|
+| name      | String    | Nombre completo del usuario           | Not Blank                 |
+| email     | String    | Correo electrónico del usuario        | Not Blank, Valid Email, Unique |
+| username  | String    | Nombre de usuario para iniciar sesión | Not Blank, Unique         |
+| password  | String    | Contraseña del usuario                | Not Blank                 |
+| role      | String    | Rol del usuario (USER por defecto)    | Not Null, Default 'USER'  |
+| phone     | String    | Número de teléfono del usuario        | Opcional                  |
+| birthDate | LocalDate | Fecha de nacimiento del usuario       | Opcional                  |
 
 ### Property
 
@@ -199,8 +200,9 @@ inmobix-backend/
 
 ## 📜 Historial de Cambios
 
-| Fecha | Ticket | Cambio | Autor |
-|-------|--------|--------|-------|
+| Fecha      | Ticket | Cambio | Autor |
+|------------|--------|--------|-------|
+| 29/10/2025 | INB-29 | Reemplazo de ID por UUID y conexión con Supabase completada | Andrés Gómez |
 | 03/10/2025 | INB-28 | Agregar métodos PUT y DELETE en UserController y UserService | Andrés Gómez |
 | 02/10/2025 | INB-20 | Completar/Actualizar README backend | Jordy Prada Yanes |
 | 02/10/2025 | INB-19 | Redactar README inicial backend | Jordy Prada Yanes |
@@ -245,7 +247,7 @@ inmobix-backend/
 - **Java 21**
 - **Spring Boot 3.5.5**
 - **Spring Data JPA**
-- **H2 Database**
+- **PostgreSQL**
 - **Lombok**
 - **BCrypt** (Spring Security Crypto)
 - **Maven**
@@ -263,31 +265,17 @@ git clone https://github.com/Inmobix/inmobix-backend.git
 ```bash
 cd inmobix-backend
 ```
+3. **Configurar variables del proyecto:**
 
-3. **Ejecutar con Maven:**
-```bash
-./mvnw spring-boot:run
-```
-
-4. **La aplicación estará disponible en:**
-```
-http://localhost:8080
-```
-
-5. **Acceder a la consola H2:**
-```
-http://localhost:8080/h2-console
-```
-- **JDBC URL:** `jdbc:h2:file:./data/inmobix-backend`
-- **Usuario:** `sa`
-- **Contraseña:** (vacío)
+Antes de ejecutar el proyecto, habilita y configura las variables de entorno proporcionadas por el equipo para conexión a la base de datos y otras configuraciones necesarias.
 
 ---
 
 ## 📝 Notas Importantes
 
-- El proyecto utiliza **H2 en modo archivo** para persistencia de datos
-- Las contraseñas se almacenan **hasheadas con BCrypt**
-- **CORS** configurado para `http://localhost:4200`
-- Los IDs se generan automáticamente con `@GeneratedValue`
-- Al eliminar un usuario, primero debes eliminar sus propiedades asociadas
+- El proyecto ahora utiliza **PostgreSQL** para persistencia de datos.
+- Los IDs de usuario son **UUID** y se generan automáticamente.
+- Se añadió el campo **role** para los usuarios (`USER` por defecto).
+- Las contraseñas se almacenan **hasheadas con BCrypt**.
+- **CORS** configurado para `http://localhost:4200`.
+- Al eliminar un usuario, primero debes eliminar sus propiedades asociadas.
