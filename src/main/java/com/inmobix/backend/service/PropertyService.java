@@ -10,6 +10,7 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import java.math.BigDecimal;
 import java.util.List;
+import java.util.UUID;
 import java.util.stream.Collectors;
 
 @Service
@@ -53,14 +54,12 @@ public class PropertyService {
         return mapToResponse(saved);
     }
 
-    // Obtener propiedad por ID
     public PropertyResponse getById(Long id) {
         Property property = propertyRepository.findById(id)
                 .orElseThrow(() -> new RuntimeException("Propiedad no encontrada con id " + id));
         return mapToResponse(property);
     }
 
-    // Listar todas las propiedades
     public List<PropertyResponse> getAll() {
         return propertyRepository.findAll()
                 .stream()
@@ -68,7 +67,6 @@ public class PropertyService {
                 .collect(Collectors.toList());
     }
 
-    // Actualizar una propiedad
     @Transactional
     public PropertyResponse update(Long id, PropertyRequest request) {
         Property property = propertyRepository.findById(id)
@@ -93,7 +91,6 @@ public class PropertyService {
         return mapToResponse(updated);
     }
 
-    // Eliminar una propiedad
     @Transactional
     public void delete(Long id) {
         if (!propertyRepository.existsById(id)) {
@@ -102,7 +99,6 @@ public class PropertyService {
         propertyRepository.deleteById(id);
     }
 
-    // Buscar propiedades disponibles
     public List<PropertyResponse> getAvailableProperties() {
         return propertyRepository.findByAvailableTrue()
                 .stream()
@@ -110,7 +106,6 @@ public class PropertyService {
                 .collect(Collectors.toList());
     }
 
-    // Buscar por ciudad
     public List<PropertyResponse> getByCity(String city) {
         return propertyRepository.findByCity(city)
                 .stream()
@@ -118,7 +113,6 @@ public class PropertyService {
                 .collect(Collectors.toList());
     }
 
-    // Buscar por tipo de propiedad
     public List<PropertyResponse> getByPropertyType(String propertyType) {
         return propertyRepository.findByPropertyType(propertyType)
                 .stream()
@@ -126,7 +120,6 @@ public class PropertyService {
                 .collect(Collectors.toList());
     }
 
-    // Buscar por tipo de transacción
     public List<PropertyResponse> getByTransactionType(String transactionType) {
         return propertyRepository.findByTransactionType(transactionType)
                 .stream()
@@ -134,7 +127,6 @@ public class PropertyService {
                 .collect(Collectors.toList());
     }
 
-    // Buscar por rango de precio
     public List<PropertyResponse> getByPriceRange(BigDecimal minPrice, BigDecimal maxPrice) {
         return propertyRepository.findByPriceBetween(minPrice, maxPrice)
                 .stream()
@@ -142,15 +134,14 @@ public class PropertyService {
                 .collect(Collectors.toList());
     }
 
-    // Buscar propiedades de un usuario
-    public List<PropertyResponse> getByUserId(Long userId) {
+    // Buscar propiedades de un usuario usando UUID
+    public List<PropertyResponse> getByUserId(UUID userId) {
         return propertyRepository.findByUserId(userId)
                 .stream()
                 .map(this::mapToResponse)
                 .collect(Collectors.toList());
     }
 
-    // Método auxiliar para mapear Property a PropertyResponse
     private PropertyResponse mapToResponse(Property property) {
         PropertyResponse response = new PropertyResponse();
         response.setId(property.getId());
@@ -171,9 +162,8 @@ public class PropertyService {
         response.setCreatedAt(property.getCreatedAt());
         response.setUpdatedAt(property.getUpdatedAt());
 
-        // Incluir información del usuario si existe
         if (property.getUser() != null) {
-            response.setUserId(property.getUser().getId());
+            response.setUserId(property.getUser().getId()); // UUID
             response.setUserName(property.getUser().getName());
             response.setUserEmail(property.getUser().getEmail());
             response.setUserPhone(property.getUser().getPhone());

@@ -7,6 +7,7 @@ import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 import java.math.BigDecimal;
+import java.util.UUID;
 
 @Data
 @AllArgsConstructor
@@ -51,5 +52,5 @@ public class PropertyRequest {
 
     private String imageUrl;
 
-    private Long userId; // ID del usuario propietario/agente
+    private UUID userId; // ID del usuario propietario/agente
 }
