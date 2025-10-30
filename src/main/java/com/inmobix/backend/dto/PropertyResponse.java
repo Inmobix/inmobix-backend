@@ -5,6 +5,7 @@ import lombok.Data;
 import lombok.NoArgsConstructor;
 import java.math.BigDecimal;
 import java.time.LocalDateTime;
+import java.util.UUID;
 
 @Data
 @AllArgsConstructor
@@ -30,7 +31,7 @@ public class PropertyResponse {
     private LocalDateTime updatedAt;
 
     // Información básica del usuario propietario
-    private Long userId;
+    private UUID userId;
     private String userName;
     private String userEmail;
     private String userPhone;

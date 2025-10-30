@@ -5,6 +5,7 @@ import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.stereotype.Repository;
 import java.math.BigDecimal;
 import java.util.List;
+import java.util.UUID;
 
 @Repository
 public interface PropertyRepository extends JpaRepository<Property, Long> {
@@ -31,5 +32,6 @@ public interface PropertyRepository extends JpaRepository<Property, Long> {
     List<Property> findByBedroomsGreaterThanEqual(Integer bedrooms);
 
     // Buscar propiedades por usuario
-    List<Property> findByUserId(Long userId);
+    List<Property> findByUserId(UUID userId);
+
 }
