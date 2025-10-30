@@ -1,6 +1,7 @@
 package com.inmobix.backend.model;
 
 import java.time.LocalDate;
+import java.time.LocalDateTime;
 import java.util.UUID;
 import jakarta.persistence.*;
 import jakarta.validation.constraints.Email;
@@ -44,4 +45,9 @@ public class User {
     @Enumerated(EnumType.STRING)
     @Column(nullable = false)
     private Role role = Role.USER; // Valor por defecto
+
+    private boolean verified = false;
+    private String verificationCode;
+    private String resetToken;
+    private LocalDateTime resetTokenExpiry;
 }

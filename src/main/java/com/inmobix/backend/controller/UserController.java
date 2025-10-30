@@ -101,6 +101,14 @@ public class UserController {
             return ResponseEntity.status(500).body("Error enviando correo: " + e.getMessage());
         }
     }
+    @GetMapping("/user/verify")
+    public ResponseEntity<String> verifyEmail(@RequestParam String code) {
+        return ResponseEntity.ok(userService.verifyEmail(code));
+    }
 
+    @PostMapping("/user/reset-password")
+    public ResponseEntity<String> resetPassword(@RequestParam String token, @RequestParam String newPassword) {
+        return ResponseEntity.ok(userService.resetPassword(token, newPassword));
+    }
 
 }
