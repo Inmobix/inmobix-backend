@@ -3,10 +3,12 @@ package com.inmobix.backend.controller;
 import com.inmobix.backend.dto.UserRequest;
 import com.inmobix.backend.dto.UserResponse;
 import com.inmobix.backend.service.UserService;
+import jakarta.mail.MessagingException;
 import jakarta.validation.Valid;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
+import com.inmobix.backend.service.EmailService;
 
 import java.util.List;
 import java.util.UUID;
@@ -17,9 +19,11 @@ import java.util.UUID;
 public class UserController {
 
     private final UserService userService;
+    private final EmailService emailService;
 
-    public UserController(UserService userService) {
+    public UserController(UserService userService, EmailService emailService) {
         this.userService = userService;
+        this.emailService = emailService;
     }
 
     // POST /register
@@ -77,4 +81,26 @@ public class UserController {
         userService.delete(id);
         return ResponseEntity.noContent().build();
     }
+
+    @PostMapping("/send-test-html")
+    public ResponseEntity<String> sendTestHtmlEmail(@RequestParam String email) {
+        String htmlContent = """
+        <html>
+            <body>
+                <h1 style="color: #2E86C1;">¡Hola desde Inmobix!</h1>
+                <p>Este es un correo de prueba con <b>HTML</b> y estilo.</p>
+                <a href="https://inmobix.com">Visita nuestro sitio</a>
+            </body>
+        </html>
+    """;
+
+        try {
+            emailService.sendHtmlEmail(email, "Correo de prueba Inmobix (HTML)", htmlContent);
+            return ResponseEntity.ok("Correo HTML enviado a " + email);
+        } catch (MessagingException e) {
+            return ResponseEntity.status(500).body("Error enviando correo: " + e.getMessage());
+        }
+    }
+
+
 }
