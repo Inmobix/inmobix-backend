@@ -1,114 +1,120 @@
 package com.inmobix.backend.controller;
 
-import com.inmobix.backend.dto.UserRequest;
-import com.inmobix.backend.dto.UserResponse;
+import com.inmobix.backend.dto.*;
+import com.inmobix.backend.model.Role;
 import com.inmobix.backend.service.UserService;
-import jakarta.mail.MessagingException;
 import jakarta.validation.Valid;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
-import com.inmobix.backend.service.EmailService;
 
 import java.util.List;
 import java.util.UUID;
 
 @RestController
 @RequestMapping("/api")
-@CrossOrigin(origins = "http://localhost:4200")
 public class UserController {
 
     private final UserService userService;
-    private final EmailService emailService;
 
-    public UserController(UserService userService, EmailService emailService) {
+    public UserController(UserService userService) {
         this.userService = userService;
-        this.emailService = emailService;
     }
 
-    // POST /register
     @PostMapping("/register")
-    public ResponseEntity<UserResponse> register(@Valid @RequestBody UserRequest request) {
+    public ResponseEntity<ApiResponse<UserResponse>> register(@Valid @RequestBody UserRequest request) {
         UserResponse response = userService.register(request);
-        return ResponseEntity.status(HttpStatus.CREATED).body(response);
+        return ResponseEntity
+                .status(HttpStatus.CREATED)
+                .body(ApiResponse.success("Usuario registrado exitosamente. Verifica tu correo para activar tu cuenta.", response));
     }
 
-    // POST /login
     @PostMapping("/login")
-    public ResponseEntity<String> login(@RequestBody UserRequest request) {
-        if (request.getEmail() == null || request.getPassword() == null) {
-            return ResponseEntity.badRequest().body("Email y contraseña son obligatorios");
-        }
-        String result = userService.login(request.getEmail(), request.getPassword());
-        return ResponseEntity.ok(result);
+    public ResponseEntity<ApiResponse<UserResponse>> login(@Valid @RequestBody LoginRequest request) {
+        UserResponse response = userService.login(request.getEmail(), request.getPassword());
+        return ResponseEntity
+                .ok(ApiResponse.success("Login exitoso", response));
     }
 
-    // POST /forgot-password
     @PostMapping("/forgot-password")
-    public ResponseEntity<String> forgotPassword(@RequestBody UserRequest request) {
-        if (request.getEmail() == null) {
-            return ResponseEntity.badRequest().body("El email es obligatorio");
-        }
-        String result = userService.forgotPassword(request.getEmail());
-        return ResponseEntity.ok(result);
+    public ResponseEntity<ApiResponse<Void>> forgotPassword(@Valid @RequestBody ForgotPasswordRequest request) {
+        userService.forgotPassword(request.getEmail());
+        return ResponseEntity
+                .ok(ApiResponse.success("Se ha enviado un enlace de recuperación a tu correo", null));
     }
 
-    // GET /user/{id}
-    @GetMapping("/user/{id}")
-    public ResponseEntity<UserResponse> getById(@PathVariable UUID id) {
-        UserResponse response = userService.getById(id);
-        return ResponseEntity.ok(response);
-    }
-
-    // GET /users
-    @GetMapping("/users")
-    public ResponseEntity<List<UserResponse>> getAllUsers() {
-        return ResponseEntity.ok(userService.getAll());
-    }
-
-    // PUT /user/{id} - Actualizar usuario
-    @PutMapping("/user/{id}")
-    public ResponseEntity<UserResponse> updateUser(
-            @PathVariable UUID id,
-            @Valid @RequestBody UserRequest request) {
-        UserResponse response = userService.update(id, request);
-        return ResponseEntity.ok(response);
-    }
-
-    // DELETE /user/{id} - Eliminar usuario
-    @DeleteMapping("/user/{id}")
-    public ResponseEntity<Void> deleteUser(@PathVariable UUID id) {
-        userService.delete(id);
-        return ResponseEntity.noContent().build();
-    }
-
-    @PostMapping("/send-test-html")
-    public ResponseEntity<String> sendTestHtmlEmail(@RequestParam String email) {
-        String htmlContent = """
-        <html>
-            <body>
-                <h1 style="color: #2E86C1;">¡Hola desde Inmobix!</h1>
-                <p>Este es un correo de prueba con <b>HTML</b> y estilo.</p>
-                <a href="https://inmobix.com">Visita nuestro sitio</a>
-            </body>
-        </html>
-    """;
-
-        try {
-            emailService.sendHtmlEmail(email, "Correo de prueba Inmobix (HTML)", htmlContent);
-            return ResponseEntity.ok("Correo HTML enviado a " + email);
-        } catch (MessagingException e) {
-            return ResponseEntity.status(500).body("Error enviando correo: " + e.getMessage());
-        }
-    }
     @GetMapping("/user/verify")
-    public ResponseEntity<String> verifyEmail(@RequestParam String code) {
-        return ResponseEntity.ok(userService.verifyEmail(code));
+    public ResponseEntity<ApiResponse<Void>> verifyEmail(@RequestParam String code) {
+        userService.verifyEmail(code);
+        return ResponseEntity
+                .ok(ApiResponse.success("¡Correo verificado exitosamente! Ya puedes iniciar sesión.", null));
     }
 
     @PostMapping("/user/reset-password")
-    public ResponseEntity<String> resetPassword(@RequestParam String token, @RequestParam String newPassword) {
-        return ResponseEntity.ok(userService.resetPassword(token, newPassword));
+    public ResponseEntity<ApiResponse<Void>> resetPassword(@Valid @RequestBody ResetPasswordRequest request) {
+        userService.resetPassword(request.getToken(), request.getNewPassword());
+        return ResponseEntity
+                .ok(ApiResponse.success("Contraseña restablecida correctamente", null));
     }
 
+    @PostMapping("/user/resend-verification")
+    public ResponseEntity<ApiResponse<Void>> resendVerificationEmail(@Valid @RequestBody ForgotPasswordRequest request) {
+        userService.resendVerificationEmail(request.getEmail());
+        return ResponseEntity
+                .ok(ApiResponse.success("Correo de verificación reenviado", null));
+    }
+
+    // Buscar por documento (requiere autenticación)
+    @GetMapping("/user/documento/{documento}")
+    public ResponseEntity<ApiResponse<UserResponse>> getByDocumento(
+            @PathVariable String documento,
+            @RequestHeader("X-User-Id") UUID requesterId,
+            @RequestHeader("X-User-Role") Role requesterRole) {
+        UserResponse response = userService.getByDocumento(documento, requesterId, requesterRole);
+        return ResponseEntity
+                .ok(ApiResponse.success("Usuario encontrado", response));
+    }
+
+    // MODIFICADO - Solo ADMIN
+    @GetMapping("/users")
+    public ResponseEntity<ApiResponse<List<UserResponse>>> getAllUsers(
+            @RequestHeader("X-User-Role") Role requesterRole) {
+        List<UserResponse> users = userService.getAll(requesterRole);
+        return ResponseEntity
+                .ok(ApiResponse.success("Usuarios obtenidos exitosamente", users));
+    }
+
+    // Solicitar token para editar
+    @PostMapping("/user/request-edit/{id}")
+    public ResponseEntity<ApiResponse<Void>> requestEditToken(@PathVariable UUID id) {
+        userService.requestEditToken(id);
+        return ResponseEntity
+                .ok(ApiResponse.success("Se ha enviado un correo de confirmación para editar tu cuenta", null));
+    }
+
+    // Confirmar edición con token
+    @PutMapping("/user/confirm-edit")
+    public ResponseEntity<ApiResponse<UserResponse>> confirmUpdate(
+            @RequestParam String token,
+            @Valid @RequestBody UserUpdateRequest request) {
+        UserResponse response = userService.confirmUpdate(token, request);
+        return ResponseEntity
+                .ok(ApiResponse.success("Usuario actualizado exitosamente", response));
+    }
+
+    // Solicitar token para eliminar
+    @PostMapping("/user/request-delete/{id}")
+    public ResponseEntity<ApiResponse<Void>> requestDeleteToken(@PathVariable UUID id) {
+        userService.requestDeleteToken(id);
+        return ResponseEntity
+                .ok(ApiResponse.success("Se ha enviado un correo de confirmación para eliminar tu cuenta", null));
+    }
+
+    // Confirmar eliminación con token
+    @DeleteMapping("/user/confirm-delete")
+    public ResponseEntity<ApiResponse<Void>> confirmDelete(@RequestParam String token) {
+        userService.confirmDelete(token);
+        return ResponseEntity
+                .ok(ApiResponse.success("Usuario eliminado exitosamente", null));
+    }
 }

@@ -10,7 +10,7 @@ import java.time.LocalDate;
 @Data
 @AllArgsConstructor
 @NoArgsConstructor
-public class UserRequest {
+public class UserUpdateRequest {
 
     @NotBlank(message = "El nombre es obligatorio")
     private String name;
@@ -22,12 +22,8 @@ public class UserRequest {
     @NotBlank(message = "El username es obligatorio")
     private String username;
 
-    @NotBlank(message = "La contraseña es obligatoria")
-    private String password;
-
-    @NotBlank(message = "El documento es obligatorio")
+    private String password; // Opcional
     private String documento;
-
     private String phone;
     private LocalDate birthDate;
 }
