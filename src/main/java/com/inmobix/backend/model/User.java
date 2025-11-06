@@ -39,7 +39,7 @@ public class User {
     private String password;
 
     @Column(unique = true)
-    private String documento; // NUEVO
+    private String documento;
 
     private String phone;
 
@@ -54,7 +54,6 @@ public class User {
     private String resetToken;
     private LocalDateTime resetTokenExpiry;
 
-    // NUEVOS CAMPOS
     private String editToken;
     private LocalDateTime editTokenExpiry;
     private String deleteToken;

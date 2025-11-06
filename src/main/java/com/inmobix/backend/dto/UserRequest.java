@@ -25,7 +25,9 @@ public class UserRequest {
     @NotBlank(message = "La contraseña es obligatoria")
     private String password;
 
-    private String phone;
+    @NotBlank(message = "El documento es obligatorio")
+    private String documento;
 
+    private String phone;
     private LocalDate birthDate;
 }
