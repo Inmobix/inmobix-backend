@@ -38,16 +38,25 @@ public class User {
     @Column(nullable = false)
     private String password;
 
+    @Column(unique = true)
+    private String documento; // NUEVO
+
     private String phone;
 
     private LocalDate birthDate;
 
     @Enumerated(EnumType.STRING)
     @Column(nullable = false)
-    private Role role = Role.USER; // Valor por defecto
+    private Role role = Role.USER;
 
     private boolean verified = false;
     private String verificationCode;
     private String resetToken;
     private LocalDateTime resetTokenExpiry;
+
+    // NUEVOS CAMPOS
+    private String editToken;
+    private LocalDateTime editTokenExpiry;
+    private String deleteToken;
+    private LocalDateTime deleteTokenExpiry;
 }
