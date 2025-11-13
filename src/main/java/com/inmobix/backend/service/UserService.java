@@ -1,8 +1,6 @@
 package com.inmobix.backend.service;
 
-import com.inmobix.backend.dto.UserRequest;
-import com.inmobix.backend.dto.UserResponse;
-import com.inmobix.backend.dto.UserUpdateRequest;
+import com.inmobix.backend.dto.*;
 import com.inmobix.backend.exception.AuthenticationException;
 import com.inmobix.backend.exception.BadRequestException;
 import com.inmobix.backend.exception.DuplicateResourceException;
@@ -27,7 +25,6 @@ public class UserService {
     private final PasswordEncoder passwordEncoder;
     private final EmailService emailService;
 
-    // NUEVAS VARIABLES INYECTADAS
     @Value("${app.url.backend}")
     private String backendUrl;
 
@@ -60,12 +57,16 @@ public class UserService {
         entity.setBirthDate(request.getBirthDate());
         entity.setRole(Role.USER);
         entity.setVerified(false);
-        entity.setVerificationCode(generateVerificationCode());
+
+        // Generar código de 6 dígitos y token único
+        entity.setVerificationCode(generateSixDigitCode());
+        entity.setVerificationToken(generateUniqueToken()); // NUEVO
+        entity.setVerificationCodeExpiry(LocalDateTime.now().plusMinutes(5));
 
         User saved = repository.save(entity);
         sendVerificationEmail(saved);
 
-        return mapToResponse(saved);
+        return mapToResponseWithToken(saved); // Incluye el token en la respuesta
     }
 
     @Transactional
@@ -85,40 +86,125 @@ public class UserService {
     }
 
     @Transactional
-    public void forgotPassword(String email) {
+    public ForgotPasswordResponse forgotPassword(String email) {
         User user = repository.findByEmail(email)
                 .orElseThrow(() -> new ResourceNotFoundException("No existe una cuenta con el email " + email));
 
-        user.setResetToken(UUID.randomUUID().toString());
-        user.setResetTokenExpiry(LocalDateTime.now().plusMinutes(30));
+        // Rate limiting - verificar si hay código activo
+        if (user.getResetTokenExpiry() != null &&
+                user.getResetTokenExpiry().isAfter(LocalDateTime.now())) {
+
+            long secondsRemaining = java.time.Duration.between(
+                    LocalDateTime.now(),
+                    user.getResetTokenExpiry()
+            ).getSeconds();
+
+            long minutes = secondsRemaining / 60;
+            long seconds = secondsRemaining % 60;
+
+            throw new BadRequestException(
+                    String.format("Ya hay un código activo. Podrás solicitar uno nuevo en %d:%02d", minutes, seconds)
+            );
+        }
+
+        // Generar código de 6 dígitos y token único
+        user.setResetToken(generateSixDigitCode());
+        user.setResetPasswordToken(generateUniqueToken());
+        user.setResetTokenExpiry(LocalDateTime.now().plusMinutes(5));
         repository.save(user);
 
         sendPasswordResetEmail(user);
+
+        // Devolver el token para que el frontend lo guarde
+        return new ForgotPasswordResponse(
+                user.getResetPasswordToken(),
+                "Se ha enviado un código de recuperación a tu correo. Válido por 5 minutos."
+        );
     }
 
     @Transactional
-    public void verifyEmail(String code) {
-        User user = repository.findByVerificationCode(code)
-                .orElseThrow(() -> new BadRequestException("Código de verificación inválido o expirado"));
+    public void verifyEmail(String verificationToken, String code) {
+        User user = repository.findByVerificationToken(verificationToken)
+                .orElseThrow(() -> new BadRequestException("Token de verificación inválido"));
+
+        if (user.getVerificationCode() == null || !user.getVerificationCode().equals(code)) {
+            throw new BadRequestException("Código de verificación inválido");
+        }
+
+        // Validar que no haya expirado
+        if (user.getVerificationCodeExpiry().isBefore(LocalDateTime.now())) {
+            throw new BadRequestException("El código ha expirado. Solicita uno nuevo.");
+        }
 
         user.setVerified(true);
         user.setVerificationCode(null);
-        repository.save(user);
+        user.setVerificationToken(null); // Limpiar el token usado
+        user.setVerificationCodeExpiry(null);
+        User saved = repository.save(user);
+
+        // NUEVO - Enviar email de confirmación
+        sendVerificationSuccessEmail(saved);
     }
 
     @Transactional
-    public void resetPassword(String token, String newPassword) {
-        User user = repository.findByResetToken(token)
-                .orElseThrow(() -> new BadRequestException("Token inválido o expirado"));
+    public void resetPassword(String resetPasswordToken, String code, String newPassword) {
+        User user = repository.findByResetPasswordToken(resetPasswordToken)
+                .orElseThrow(() -> new BadRequestException("Token de recuperación inválido"));
 
+        if (user.getResetToken() == null || !user.getResetToken().equals(code)) {
+            throw new BadRequestException("Código inválido");
+        }
+
+        // Validar que no haya expirado
         if (user.getResetTokenExpiry().isBefore(LocalDateTime.now())) {
-            throw new BadRequestException("El token ha expirado. Solicita uno nuevo.");
+            throw new BadRequestException("El código ha expirado. Solicita uno nuevo.");
         }
 
         user.setPassword(passwordEncoder.encode(newPassword));
         user.setResetToken(null);
+        user.setResetPasswordToken(null); // Limpiar el token usado
         user.setResetTokenExpiry(null);
-        repository.save(user);
+        User saved = repository.save(user);
+
+        // NUEVO - Enviar email de confirmación
+        sendPasswordResetSuccessEmail(saved);
+    }
+
+    @Transactional
+    public UserResponse resendVerificationEmail(String email) {
+        User user = repository.findByEmail(email)
+                .orElseThrow(() -> new ResourceNotFoundException("Usuario no encontrado con email " + email));
+
+        if (user.isVerified()) {
+            throw new BadRequestException("Este usuario ya está verificado");
+        }
+
+        // Rate limiting - verificar si hay código activo
+        if (user.getVerificationCodeExpiry() != null &&
+                user.getVerificationCodeExpiry().isAfter(LocalDateTime.now())) {
+
+            long secondsRemaining = java.time.Duration.between(
+                    LocalDateTime.now(),
+                    user.getVerificationCodeExpiry()
+            ).getSeconds();
+
+            long minutes = secondsRemaining / 60;
+            long seconds = secondsRemaining % 60;
+
+            throw new BadRequestException(
+                    String.format("Ya hay un código activo. Podrás solicitar uno nuevo en %d:%02d", minutes, seconds)
+            );
+        }
+
+        // Generar nuevo código y nuevo token
+        user.setVerificationCode(generateSixDigitCode());
+        user.setVerificationToken(generateUniqueToken());
+        user.setVerificationCodeExpiry(LocalDateTime.now().plusMinutes(5));
+        User saved = repository.save(user);
+
+        sendResendVerificationEmail(saved);
+
+        return mapToResponseWithToken(saved);
     }
 
     public UserResponse getByDocumento(String documento, UUID requesterId, Role requesterRole) {
@@ -170,7 +256,9 @@ public class UserService {
             }
             user.setEmail(request.getEmail());
             user.setVerified(false);
-            user.setVerificationCode(generateVerificationCode());
+            user.setVerificationCode(generateSixDigitCode());
+            user.setVerificationToken(generateUniqueToken());
+            user.setVerificationCodeExpiry(LocalDateTime.now().plusMinutes(5));
             sendVerificationEmail(user);
         }
 
@@ -222,40 +310,36 @@ public class UserService {
         repository.deleteById(user.getId());
     }
 
-    @Transactional
-    public void resendVerificationEmail(String email) {
-        User user = repository.findByEmail(email)
-                .orElseThrow(() -> new ResourceNotFoundException("Usuario no encontrado con email " + email));
+    // ==================== MÉTODOS PRIVADOS ====================
 
-        if (user.isVerified()) {
-            throw new BadRequestException("Este usuario ya está verificado");
-        }
-
-        user.setVerificationCode(generateVerificationCode());
-        repository.save(user);
-        sendVerificationEmail(user);
+    private String generateSixDigitCode() {
+        int code = new Random().nextInt(900000) + 100000;
+        return String.valueOf(code);
     }
 
-    // EMAILS CON URLs DINÁMICAS
+    private String generateUniqueToken() {
+        // Genera un token único combinando UUID + timestamp
+        return UUID.randomUUID().toString() + "_" + System.currentTimeMillis();
+    }
+
     private void sendVerificationEmail(User user) {
-        String verifyUrl = backendUrl + "/api/user/verify?code=" + user.getVerificationCode();
         String html = """
             <html>
                 <body style="font-family: Arial, sans-serif; line-height: 1.6; color: #333;">
                     <div style="max-width: 600px; margin: 0 auto; padding: 20px; border: 1px solid #ddd; border-radius: 10px;">
                         <h2 style="color: #2E86C1;">¡Bienvenido a Inmobix, %s!</h2>
-                        <p>Gracias por registrarte. Para activar tu cuenta, verifica tu correo electrónico haciendo clic en el botón:</p>
+                        <p>Gracias por registrarte. Para activar tu cuenta, utiliza el siguiente código de verificación:</p>
                         <div style="text-align: center; margin: 30px 0;">
-                            <a href="%s" style="background:#2E86C1; color:white; padding:12px 30px; text-decoration:none; border-radius:6px; display:inline-block; font-weight: bold;">
-                                Verificar mi cuenta
-                            </a>
+                            <div style="background:#f0f0f0; padding:20px; border-radius:8px; display:inline-block;">
+                                <h1 style="margin:0; color:#2E86C1; font-size:48px; letter-spacing:8px;">%s</h1>
+                            </div>
                         </div>
+                        <p style="color: #666; font-size: 14px; text-align: center;">Este código expira en <strong>5 minutos</strong></p>
                         <p style="color: #666; font-size: 14px;">Si no creaste esta cuenta, ignora este correo.</p>
-                        <p style="color: #666; font-size: 14px;">Código de verificación: <strong>%s</strong></p>
                     </div>
                 </body>
             </html>
-        """.formatted(user.getName(), verifyUrl, user.getVerificationCode());
+        """.formatted(user.getName(), user.getVerificationCode());
 
         try {
             emailService.sendHtmlEmail(user.getEmail(), "Verifica tu cuenta de Inmobix", html);
@@ -264,31 +348,131 @@ public class UserService {
         }
     }
 
+    private void sendResendVerificationEmail(User user) {
+        String html = """
+            <html>
+                <body style="font-family: Arial, sans-serif; line-height: 1.6; color: #333;">
+                    <div style="max-width: 600px; margin: 0 auto; padding: 20px; border: 1px solid #ddd; border-radius: 10px;">
+                        <h2 style="color: #F39C12;">Verifica tu cuenta</h2>
+                        <p>Hola %s,</p>
+                        <p>Has solicitado un nuevo código de verificación. Utiliza el siguiente código para activar tu cuenta:</p>
+                        <div style="text-align: center; margin: 30px 0;">
+                            <div style="background:#f0f0f0; padding:20px; border-radius:8px; display:inline-block;">
+                                <h1 style="margin:0; color:#F39C12; font-size:48px; letter-spacing:8px;">%s</h1>
+                            </div>
+                        </div>
+                        <p style="color: #666; font-size: 14px; text-align: center;">Este código expira en <strong>5 minutos</strong></p>
+                        <p style="color: #666; font-size: 14px;">Si no solicitaste este código, ignora este correo.</p>
+                    </div>
+                </body>
+            </html>
+        """.formatted(user.getName(), user.getVerificationCode());
+
+        try {
+            emailService.sendHtmlEmail(user.getEmail(), "Verifica tu cuenta de Inmobix", html);
+        } catch (MessagingException e) {
+            throw new RuntimeException("Error al enviar correo de verificación: " + e.getMessage());
+        }
+    }
+
+    private void sendVerificationSuccessEmail(User user) {
+        String html = """
+            <html>
+                <body style="font-family: Arial, sans-serif; line-height: 1.6; color: #333;">
+                    <div style="max-width: 600px; margin: 0 auto; padding: 20px; border: 1px solid #ddd; border-radius: 10px;">
+                        <h2 style="color: #27AE60; text-align: center;">¡Verificación Exitosa!</h2>
+                        <p>Hola %s,</p>
+                        <p>¡Excelentes noticias! Tu cuenta ha sido verificada exitosamente.</p>
+                        <div style="background:#f0f0f0; padding:20px; border-radius:8px; margin:20px 0;">
+                            <p style="margin:0; color:#555;"><strong>✅ Tu email está confirmado</strong></p>
+                            <p style="margin:5px 0 0 0; color:#555;"><strong>✅ Ya puedes iniciar sesión</strong></p>
+                            <p style="margin:5px 0 0 0; color:#555;"><strong>✅ Tu cuenta está activa</strong></p>
+                        </div>
+                        <p>Ahora puedes acceder a todas las funcionalidades de Inmobix:</p>
+                        <ul style="color:#555;">
+                            <li>Publicar propiedades</li>
+                            <li>Buscar inmuebles</li>
+                            <li>Contactar vendedores</li>
+                            <li>Gestionar tu perfil</li>
+                        </ul>
+                        <div style="text-align: center; margin: 30px 0;">
+                            <a href="%s" style="background:#2E86C1; color:white; padding:12px 30px; text-decoration:none; border-radius:6px; display:inline-block; font-weight: bold;">
+                                Ir a Inmobix
+                            </a>
+                        </div>
+                        <p style="color: #666; font-size: 14px; text-align: center;">¡Bienvenido a la comunidad Inmobix!</p>
+                    </div>
+                </body>
+            </html>
+        """.formatted(user.getName(), frontendUrl);
+
+        try {
+            emailService.sendHtmlEmail(user.getEmail(), "✅ Cuenta verificada - Inmobix", html);
+        } catch (MessagingException e) {
+            throw new RuntimeException("Error al enviar correo de confirmación: " + e.getMessage());
+        }
+    }
+
     private void sendPasswordResetEmail(User user) {
-        String resetUrl = frontendUrl + "/reset-password?token=" + user.getResetToken();
         String html = """
             <html>
                 <body style="font-family: Arial, sans-serif; line-height: 1.6; color: #333;">
                     <div style="max-width: 600px; margin: 0 auto; padding: 20px; border: 1px solid #ddd; border-radius: 10px;">
                         <h2 style="color: #E74C3C;">Recuperar contraseña</h2>
                         <p>Hola %s,</p>
-                        <p>Recibimos una solicitud para restablecer tu contraseña. Haz clic en el botón para crear una nueva:</p>
+                        <p>Recibimos una solicitud para restablecer tu contraseña. Utiliza el siguiente código:</p>
                         <div style="text-align: center; margin: 30px 0;">
-                            <a href="%s" style="background:#E74C3C; color:white; padding:12px 30px; text-decoration:none; border-radius:6px; display:inline-block; font-weight: bold;">
-                                Restablecer contraseña
-                            </a>
+                            <div style="background:#f0f0f0; padding:20px; border-radius:8px; display:inline-block;">
+                                <h1 style="margin:0; color:#E74C3C; font-size:48px; letter-spacing:8px;">%s</h1>
+                            </div>
                         </div>
-                        <p style="color: #666; font-size: 14px;">Este enlace expira en 30 minutos.</p>
+                        <p style="color: #666; font-size: 14px; text-align: center;">Este código expira en <strong>5 minutos</strong></p>
                         <p style="color: #666; font-size: 14px;">Si no solicitaste restablecer tu contraseña, ignora este correo.</p>
                     </div>
                 </body>
             </html>
-        """.formatted(user.getName(), resetUrl);
+        """.formatted(user.getName(), user.getResetToken());
 
         try {
             emailService.sendHtmlEmail(user.getEmail(), "Restablecer contraseña - Inmobix", html);
         } catch (MessagingException e) {
             throw new RuntimeException("Error al enviar correo de recuperación: " + e.getMessage());
+        }
+    }
+
+    private void sendPasswordResetSuccessEmail(User user) {
+        String html = """
+            <html>
+                <body style="font-family: Arial, sans-serif; line-height: 1.6; color: #333;">
+                    <div style="max-width: 600px; margin: 0 auto; padding: 20px; border: 1px solid #ddd; border-radius: 10px;">
+                        <h2 style="color: #27AE60; text-align: center;">Contraseña Actualizada</h2>
+                        <p>Hola %s,</p>
+                        <p>Tu contraseña ha sido restablecida exitosamente.</p>
+                        <div style="background:#f0f0f0; padding:20px; border-radius:8px; margin:20px 0;">
+                            <p style="margin:0; color:#555;"><strong>✅ Contraseña actualizada</strong></p>
+                            <p style="margin:5px 0 0 0; color:#555;"><strong>✅ Tu cuenta está segura</strong></p>
+                            <p style="margin:5px 0 0 0; color:#555;"><strong>🕐 Fecha: %s</strong></p>
+                        </div>
+                        <p style="color:#666;">Ya puedes iniciar sesión con tu nueva contraseña.</p>
+                        <div style="text-align: center; margin: 30px 0;">
+                            <a href="%s" style="background:#2E86C1; color:white; padding:12px 30px; text-decoration:none; border-radius:6px; display:inline-block; font-weight: bold;">
+                                Iniciar Sesión
+                            </a>
+                        </div>
+                        <div style="background:#fff3cd; border-left:4px solid #ffc107; padding:15px; margin:20px 0;">
+                            <p style="margin:0; color:#856404;"><strong>⚠️ Aviso de Seguridad</strong></p>
+                            <p style="margin:5px 0 0 0; color:#856404;">Si no solicitaste este cambio, tu cuenta podría estar comprometida. Por favor, contacta a soporte inmediatamente.</p>
+                        </div>
+                        <p style="color: #666; font-size: 14px; text-align: center;">Equipo de Inmobix</p>
+                    </div>
+                </body>
+            </html>
+        """.formatted(user.getName(), java.time.LocalDateTime.now().format(java.time.format.DateTimeFormatter.ofPattern("dd/MM/yyyy HH:mm")), frontendUrl);
+
+        try {
+            emailService.sendHtmlEmail(user.getEmail(), "✅ Contraseña actualizada - Inmobix", html);
+        } catch (MessagingException e) {
+            throw new RuntimeException("Error al enviar correo de confirmación: " + e.getMessage());
         }
     }
 
@@ -349,11 +533,6 @@ public class UserService {
         }
     }
 
-    private String generateVerificationCode() {
-        int code = new Random().nextInt(900000) + 100000;
-        return String.valueOf(code);
-    }
-
     private UserResponse mapToResponse(User user) {
         UserResponse response = new UserResponse();
         response.setId(user.getId());
@@ -364,6 +543,14 @@ public class UserService {
         response.setPhone(user.getPhone());
         response.setBirthDate(user.getBirthDate());
         response.setRole(user.getRole().name());
+        response.setVerificationToken(null);
+        response.setResetPasswordToken(null);
+        return response;
+    }
+
+    private UserResponse mapToResponseWithToken(User user) {
+        UserResponse response = mapToResponse(user);
+        response.setVerificationToken(user.getVerificationToken());
         return response;
     }
 }

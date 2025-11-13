@@ -8,25 +8,28 @@ Este es el backend para la plataforma Inmobix. Permite a los usuarios gestionar 
 
 La entidad `User` representa un usuario de la plataforma con sistema de verificación por email y gestión segura de acciones.
 
-| Atributo          | Tipo          | Descripción                                    | Restricciones                    |
-|-------------------|---------------|------------------------------------------------|----------------------------------|
-| id                | UUID          | Identificador único del usuario                | Primary Key, Auto-generado       |
-| name              | String        | Nombre completo del usuario                    | Not Blank                        |
-| email             | String        | Correo electrónico del usuario                 | Not Blank, Valid Email, Unique   |
-| username          | String        | Nombre de usuario para iniciar sesión          | Not Blank, Unique                |
-| password          | String        | Contraseña del usuario (hasheada con BCrypt)   | Not Blank                        |
-| documento         | String        | Documento de identidad del usuario             | Unique                           |
-| phone             | String        | Número de teléfono del usuario                 | Opcional                         |
-| birthDate         | LocalDate     | Fecha de nacimiento del usuario                | Opcional                         |
-| role              | Enum (Role)   | Rol del usuario (USER o ADMIN)                 | Not Null, Default 'USER'         |
-| verified          | Boolean       | Estado de verificación de email                | Default false                    |
-| verificationCode  | String        | Código de verificación de email                | Temporal                         |
-| resetToken        | String        | Token para recuperación de contraseña          | Temporal                         |
-| resetTokenExpiry  | LocalDateTime | Fecha de expiración del token de reset         | Temporal                         |
-| editToken         | String        | Token para confirmar edición de cuenta         | Temporal                         |
-| editTokenExpiry   | LocalDateTime | Fecha de expiración del token de edición       | Temporal                         |
-| deleteToken       | String        | Token para confirmar eliminación de cuenta     | Temporal                         |
-| deleteTokenExpiry | LocalDateTime | Fecha de expiración del token de eliminación   | Temporal                         |
+| Atributo               | Tipo          | Descripción                                  | Restricciones                  |
+|------------------------|---------------|----------------------------------------------|--------------------------------|
+| id                     | UUID          | Identificador único del usuario              | Primary Key, Auto-generado     |
+| name                   | String        | Nombre completo del usuario                  | Not Blank                      |
+| email                  | String        | Correo electrónico del usuario               | Not Blank, Valid Email, Unique |
+| username               | String        | Nombre de usuario para iniciar sesión        | Not Blank, Unique              |
+| password               | String        | Contraseña del usuario (hasheada con BCrypt) | Not Blank                      |
+| documento              | String        | Documento de identidad del usuario           | Unique                         |
+| phone                  | String        | Número de teléfono del usuario               | Opcional                       |
+| birthDate              | LocalDate     | Fecha de nacimiento del usuario              | Opcional                       |
+| role                   | Enum (Role)   | Rol del usuario (USER o ADMIN)               | Not Null, Default 'USER'       |
+| verified               | Boolean       | Estado de verificación de email              | Default false                  |
+| verificationToken      | String        | Token único para verificación                | Temporal                       |
+| verificationCodeExpiry | LocalDateTime | Marca de tiempo de expiración                | Temporal                       |
+| verificationCode       | String        | Código de verificación de email              | Temporal                       |
+| resetToken             | String        | Token para recuperación de contraseña        | Temporal                       |
+| resetPasswordToken     | String        | Token único para reset                       | Temporal                       |
+| resetTokenExpiry       | LocalDateTime | Fecha de expiración del token de reset       | Temporal                       |
+| editToken              | String        | Token para confirmar edición de cuenta       | Temporal                       |
+| editTokenExpiry        | LocalDateTime | Fecha de expiración del token de edición     | Temporal                       |
+| deleteToken            | String        | Token para confirmar eliminación de cuenta   | Temporal                       |
+| deleteTokenExpiry      | LocalDateTime | Fecha de expiración del token de eliminación | Temporal                       |
 
 ### Property
 
@@ -65,25 +68,26 @@ Esta sección proporciona detalles sobre los endpoints disponibles. Puedes usar 
 
 #### Autenticación y Registro
 
-| Método | Ruta                           | Descripción                                       | Requiere Auth |
-|--------|--------------------------------|---------------------------------------------------|---------------|
-| POST   | `/register`                    | Registra un nuevo usuario                         | No            |
-| POST   | `/login`                       | Autentica un usuario y devuelve sus datos         | No            |
-| POST   | `/forgot-password`             | Inicia el proceso de recuperación de contraseña   | No            |
-| GET    | `/user/verify`                 | Verifica el email del usuario (query: code)       | No            |
-| POST   | `/user/reset-password`         | Restablece la contraseña con token                | No            |
-| POST   | `/user/resend-verification`    | Reenvía el correo de verificación                 | No            |
+| Método   | Ruta                        | Descripción                                      | Requiere Auth |
+|----------|-----------------------------|--------------------------------------------------|---------------|
+| **POST** | `/register`                 | Registra un nuevo usuario                        | No            |
+| **POST** | `/login`                    | Autentica un usuario y devuelve sus datos        | No            |
+| **POST** | `/forgot-password`          | Inicia el proceso de recuperación de contraseña  | No            |
+| **POST** | `/user/verify`              | Verifica el correo mediante token y código       | No            |
+| **POST** | `/user/reset-password`      | Restablece la contraseña mediante token y código | No            |
+| **POST** | `/user/resend-verification` | Reenvía el correo de verificación                | No            |
 
 #### Gestión de Usuarios
 
-| Método | Ruta                           | Descripción                                       | Requiere Auth |
-|--------|--------------------------------|---------------------------------------------------|---------------|
-| GET    | `/user/documento/{documento}`  | Obtiene un usuario por documento                  | Sí (Headers)  |
-| GET    | `/users`                       | Obtiene lista de todos los usuarios               | Sí (ADMIN)    |
-| POST   | `/user/request-edit/{id}`      | Solicita token para editar cuenta                 | No            |
-| PUT    | `/user/confirm-edit`           | Confirma y ejecuta edición con token              | No            |
-| POST   | `/user/request-delete/{id}`    | Solicita token para eliminar cuenta               | No            |
-| DELETE | `/user/confirm-delete`         | Confirma y ejecuta eliminación con token          | No            |
+| Método     | Ruta                          | Descripción                              | Requiere Auth |
+|------------|-------------------------------|------------------------------------------|---------------|
+| **GET**    | `/user/documento/{documento}` | Obtiene un usuario por documento         | Sí (Headers)  |
+| **GET**    | `/users`                      | Obtiene lista de todos los usuarios      | Sí (ADMIN)    |
+| **POST**   | `/user/request-edit/{id}`     | Solicita token para editar cuenta        | No            |
+| **PUT**    | `/user/confirm-edit`          | Confirma y ejecuta edición con token     | No            |
+| **POST**   | `/user/request-delete/{id}`   | Solicita token para eliminar cuenta      | No            |
+| **DELETE** | `/user/confirm-delete`        | Confirma y ejecuta eliminación con token | No            |
+
 
 **Headers requeridos para endpoints protegidos:**
 - `X-User-Id`: UUID del usuario que hace la petición
@@ -191,13 +195,17 @@ inmobix-backend/
 │   │   │               │   ├── ApiResponse.java
 │   │   │               │   ├── ConfirmActionRequest.java
 │   │   │               │   ├── ForgotPasswordRequest.java
+│   │   │               │   ├── ForgotPasswordResponse.java
 │   │   │               │   ├── LoginRequest.java
 │   │   │               │   ├── PropertyRequest.java
 │   │   │               │   ├── PropertyResponse.java
 │   │   │               │   ├── ResetPasswordRequest.java
+│   │   │               │   ├── ResetPasswordWithTokenRequest.java
 │   │   │               │   ├── UserRequest.java
 │   │   │               │   ├── UserResponse.java
-│   │   │               │   └── UserUpdateRequest.java
+│   │   │               │   ├── UserUpdateRequest.java
+│   │   │               │   ├── VerifyEmailRequest.java
+│   │   │               │   └── VerifyWithTokenRequest.java
 │   │   │               │
 │   │   │               ├── exception/
 │   │   │               │   ├── AuthenticationException.java
@@ -266,51 +274,52 @@ inmobix-backend/
 
 ## 📜 Historial de Cambios
 
-| Fecha      | Ticket | Cambio                                                                 | Autor |
-|------------|--------|------------------------------------------------------------------------|-------|
-| 06/11/2025 | INB-42 | Se actualizó la documentación con las nuevas implementaciones          | Andrés Gómez |
-| 05/11/2025 | INB-43 | Se configuró CORS dinámico mediante variables de entorno               | Andrés Gómez |
-| 05/11/2025 | INB-41 | Se externalizó URLs de dominio en configuración                        | Andrés Gómez |
-| 05/11/2025 | INB-40 | Se actualizó UserController con nuevos endpoints de seguridad          | Andrés Gómez |
-| 05/11/2025 | INB-39 | Se implementó verificación de email y sistema de tokens en UserService | Andrés Gómez |
-| 05/11/2025 | INB-38 | Se actualizó DTOs de usuario con campo documento                       | Andrés Gómez |
-| 05/11/2025 | INB-37 | Se extendió UserRepository con nuevos métodos de búsqueda              | Andrés Gómez |
-| 05/11/2025 | INB-36 | Se agregaron documento y tokens de seguridad al modelo User            | Andrés Gómez |
-| 05/11/2025 | INB-35 | Se crearon DTOs para respuestas estandarizadas de la API               | Andrés Gómez |
-| 05/11/2025 | INB-34 | Se implementó sistema de excepciones personalizadas                    | Andrés Gómez |
-| 30/10/2025 | INB-33 | Se configuró para desplegar en Render (Dockerfile)                     | Andrés Gómez |
-| 30/10/2025 | INB-32 | Se avanzó en verificación de correo y recuperar contraseña             | Andrés Gómez |
-| 30/10/2025 | INB-31 | Se implementó el servicio de correos                                   | Andrés Gómez |
-| 29/10/2025 | INB-29 | Reemplazo de ID por UUID y conexión con Supabase completada            | Andrés Gómez |
-| 03/10/2025 | INB-28 | Agregar métodos PUT y DELETE en UserController y UserService           | Andrés Gómez |
-| 02/10/2025 | INB-20 | Completar/Actualizar README backend                                    | Jordy Prada Yanes |
-| 02/10/2025 | INB-19 | Redactar README inicial backend                                        | Jordy Prada Yanes |
-| 02/10/2025 | INB-17 | Configurar H2 y cargar datos de prueba                                 | Jordy Prada Yanes |
-| 02/10/2025 | INB-26 | Crear Property Model                                                   | Jordy Prada Yanes |
-| 02/10/2025 | INB-25 | Implementar DTO de property (Response y Request)                       | Jordy Prada Yanes |
-| 02/10/2025 | INB-16 | Crear PropertyController                                               | Jordy Prada Yanes |
-| 02/10/2025 | INB-15 | Implementar PropertyClassService                                       | Jordy Prada Yanes |
-| 02/10/2025 | INB-14 | Crear entidad y repositorio PropertyClass                              | Jordy Prada Yanes |
-| 01/10/2025 | INB-24 | Actividad clase PlaygroundJordy                                        | Jordy Prada Yanes |
-| 29/09/2025 | INB-23 | Añadir atributo crossorigin para permitir consumo del servidor         | Andrés Gómez |
-| 28/09/2025 | INB-22 | Implementar endpoint para listar todos los usuarios                    | Andrés Gómez |
-| 28/09/2025 | INB-22 | Cambiar configuración de H2 de memoria a archivo                       | Andrés Gómez |
-| 27/09/2025 | INB-21 | Agregar encriptación de contraseñas con BCrypt                         | Andrés Gómez |
-| 27/09/2025 | INB-21 | Configurar PasswordEncoder                                             | Andrés Gómez |
-| 26/09/2025 | INB-13 | Crear UserController con endpoints principales                         | Andrés Gómez |
-| 26/09/2025 | INB-13 | Ajustar UserService para devolver respuestas correctas                 | Andrés Gómez |
-| 25/09/2025 | INB-12 | Crear UserService con métodos principales                              | Andrés Gómez |
-| 25/09/2025 | INB-12 | Añadir DTOs: UserRequest y UserResponse                                | Andrés Gómez |
-| 25/09/2025 | INB-12 | Implementar validaciones en la entidad User                            | Andrés Gómez |
-| 25/09/2025 | INB-11 | Crear clase UserClass con sus campos                                   | Andrés Gómez |
-| 25/09/2025 | INB-11 | Crear UserClassRepository extendiendo JpaRepository                    | Andrés Gómez |
-| 25/09/2025 | INB-18 | Crear estructura inicial de carpetas                                   | Andrés Gómez |
-| 18/09/2025 | INB-10 | Ejercicio realizado en clase                                           | Andrés Gómez |
-| 13/09/2025 | INB-7  | Actualización de README                                                | Jordy Prada Yanes |
-| 13/09/2025 | INB-7  | Subir LenguajesController                                              | Jordy Prada Yanes |
-| 11/09/2025 | INB-6  | Especificar en el README el ejercicio realizado                        | Andrés Gómez |
-| 11/09/2025 | INB-6  | Creación de AndresGomezController con CRUD de tareas                   | Andrés Gómez |
-| 11/09/2025 | -      | Subida inicial del proyecto Spring Boot                                | Andrés Gómez |
+| Fecha      | Ticket | Cambio                                                                                                     | Autor             |
+|------------|--------|------------------------------------------------------------------------------------------------------------|-------------------|
+| 12/11/2025 | INB-45 | Mejorar sistema de correos: manejo con tokens únicos, expiración, nuevos DTOs y plantillas HTML unificadas | Andrés Gómez      |
+| 06/11/2025 | INB-42 | Se actualizó la documentación con las nuevas implementaciones                                              | Andrés Gómez      |
+| 05/11/2025 | INB-43 | Se configuró CORS dinámico mediante variables de entorno                                                   | Andrés Gómez      |
+| 05/11/2025 | INB-41 | Se externalizó URLs de dominio en configuración                                                            | Andrés Gómez      |
+| 05/11/2025 | INB-40 | Se actualizó UserController con nuevos endpoints de seguridad                                              | Andrés Gómez      |
+| 05/11/2025 | INB-39 | Se implementó verificación de email y sistema de tokens en UserService                                     | Andrés Gómez      |
+| 05/11/2025 | INB-38 | Se actualizó DTOs de usuario con campo documento                                                           | Andrés Gómez      |
+| 05/11/2025 | INB-37 | Se extendió UserRepository con nuevos métodos de búsqueda                                                  | Andrés Gómez      |
+| 05/11/2025 | INB-36 | Se agregaron documento y tokens de seguridad al modelo User                                                | Andrés Gómez      |
+| 05/11/2025 | INB-35 | Se crearon DTOs para respuestas estandarizadas de la API                                                   | Andrés Gómez      |
+| 05/11/2025 | INB-34 | Se implementó sistema de excepciones personalizadas                                                        | Andrés Gómez      |
+| 30/10/2025 | INB-33 | Se configuró para desplegar en Render (Dockerfile)                                                         | Andrés Gómez      |
+| 30/10/2025 | INB-32 | Se avanzó en verificación de correo y recuperar contraseña                                                 | Andrés Gómez      |
+| 30/10/2025 | INB-31 | Se implementó el servicio de correos                                                                       | Andrés Gómez      |
+| 29/10/2025 | INB-29 | Reemplazo de ID por UUID y conexión con Supabase completada                                                | Andrés Gómez      |
+| 03/10/2025 | INB-28 | Agregar métodos PUT y DELETE en UserController y UserService                                               | Andrés Gómez      |
+| 02/10/2025 | INB-20 | Completar/Actualizar README backend                                                                        | Jordy Prada Yanes |
+| 02/10/2025 | INB-19 | Redactar README inicial backend                                                                            | Jordy Prada Yanes |
+| 02/10/2025 | INB-17 | Configurar H2 y cargar datos de prueba                                                                     | Jordy Prada Yanes |
+| 02/10/2025 | INB-26 | Crear Property Model                                                                                       | Jordy Prada Yanes |
+| 02/10/2025 | INB-25 | Implementar DTO de property (Response y Request)                                                           | Jordy Prada Yanes |
+| 02/10/2025 | INB-16 | Crear PropertyController                                                                                   | Jordy Prada Yanes |
+| 02/10/2025 | INB-15 | Implementar PropertyClassService                                                                           | Jordy Prada Yanes |
+| 02/10/2025 | INB-14 | Crear entidad y repositorio PropertyClass                                                                  | Jordy Prada Yanes |
+| 01/10/2025 | INB-24 | Actividad clase PlaygroundJordy                                                                            | Jordy Prada Yanes |
+| 29/09/2025 | INB-23 | Añadir atributo crossorigin para permitir consumo del servidor                                             | Andrés Gómez      |
+| 28/09/2025 | INB-22 | Implementar endpoint para listar todos los usuarios                                                        | Andrés Gómez      |
+| 28/09/2025 | INB-22 | Cambiar configuración de H2 de memoria a archivo                                                           | Andrés Gómez      |
+| 27/09/2025 | INB-21 | Agregar encriptación de contraseñas con BCrypt                                                             | Andrés Gómez      |
+| 27/09/2025 | INB-21 | Configurar PasswordEncoder                                                                                 | Andrés Gómez      |
+| 26/09/2025 | INB-13 | Crear UserController con endpoints principales                                                             | Andrés Gómez      |
+| 26/09/2025 | INB-13 | Ajustar UserService para devolver respuestas correctas                                                     | Andrés Gómez      |
+| 25/09/2025 | INB-12 | Crear UserService con métodos principales                                                                  | Andrés Gómez      |
+| 25/09/2025 | INB-12 | Añadir DTOs: UserRequest y UserResponse                                                                    | Andrés Gómez      |
+| 25/09/2025 | INB-12 | Implementar validaciones en la entidad User                                                                | Andrés Gómez      |
+| 25/09/2025 | INB-11 | Crear clase UserClass con sus campos                                                                       | Andrés Gómez      |
+| 25/09/2025 | INB-11 | Crear UserClassRepository extendiendo JpaRepository                                                        | Andrés Gómez      |
+| 25/09/2025 | INB-18 | Crear estructura inicial de carpetas                                                                       | Andrés Gómez      |
+| 18/09/2025 | INB-10 | Ejercicio realizado en clase                                                                               | Andrés Gómez      |
+| 13/09/2025 | INB-7  | Actualización de README                                                                                    | Jordy Prada Yanes |
+| 13/09/2025 | INB-7  | Subir LenguajesController                                                                                  | Jordy Prada Yanes |
+| 11/09/2025 | INB-6  | Especificar en el README el ejercicio realizado                                                            | Andrés Gómez      |
+| 11/09/2025 | INB-6  | Creación de AndresGomezController con CRUD de tareas                                                       | Andrés Gómez      |
+| 11/09/2025 | -      | Subida inicial del proyecto Spring Boot                                                                    | Andrés Gómez      |
 
 ---
 
