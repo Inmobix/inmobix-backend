@@ -123,9 +123,10 @@ Esta sección proporciona detalles sobre los endpoints disponibles. Puedes usar 
     - Opción para reenviar el código de verificación
 
 2. **Recuperación de Contraseña**
-    - Sistema de tokens con expiración de 30 minutos
+    - Sistema de tokens con expiración de 5 minutos
     - Enlaces seguros enviados por email
     - Tokens de un solo uso
+    - Rate limiting para prevenir abuso
 
 3. **Confirmación de Acciones Críticas**
     - **Edición de cuenta**: Requiere confirmación por email (token válido 15 min)
@@ -142,9 +143,10 @@ Esta sección proporciona detalles sobre los endpoints disponibles. Puedes usar 
     - Validación de permisos en operaciones sensibles
 
 6. **CORS Configurado Dinámicamente**
-    - El origen permitido se configura mediante la variable `FRONTEND_URL`
+    - Orígenes permitidos configurables mediante variables de entorno
+    - Soporte para múltiples dominios separados por comas
     - Headers personalizados permitidos: `X-User-Id`, `X-User-Role`
-    - Métodos HTTP permitidos: GET, POST, PUT, DELETE, OPTIONS
+    - Métodos HTTP permitidos: GET, POST, PUT, DELETE, OPTIONS, PATCH, HEAD
     - Credenciales habilitadas para autenticación
 
 7. **Respuestas Estandarizadas**
@@ -163,12 +165,22 @@ Esta sección proporciona detalles sobre los endpoints disponibles. Puedes usar 
 
 ## 📧 Sistema de Correos
 
-El sistema implementa envío de correos HTML con plantillas personalizadas para:
+El sistema implementa envío de correos HTML mediante **Postmark** con plantillas personalizadas para:
 
 - ✅ Verificación de email al registrarse
+- 🔄 Reenvío de código de verificación
+- ✅ Confirmación de verificación exitosa
 - 🔑 Recuperación de contraseña
+- ✅ Confirmación de cambio de contraseña
 - ✏️ Confirmación de edición de cuenta
 - ⚠️ Confirmación de eliminación de cuenta
+
+**Características del sistema de correos:**
+- Formato HTML con diseño responsive
+- Versión texto plano como fallback
+- Códigos de 6 dígitos con formato visual
+- Expiración de tokens claramente indicada
+- Botones de acción estilizados
 
 ---
 
@@ -276,7 +288,9 @@ inmobix-backend/
 
 | Fecha      | Ticket | Cambio                                                                                                     | Autor             |
 |------------|--------|------------------------------------------------------------------------------------------------------------|-------------------|
-| 12/11/2025 | INB-46 | Se configuró CORS                                                                                          | Andrés Gómez      |
+| 13/11/2025 | INB-48 | Cambiar servicio de correo a Postmark                                                                      | Andrés Gómez      |
+| 12/11/2025 | INB-47 | Desplegar ajustes                                                                                          | Andrés Gómez      |
+| 12/11/2025 | INB-46 | Se configuró CORS dinámico con soporte para múltiples orígenes                                             | Andrés Gómez      |
 | 12/11/2025 | INB-45 | Mejorar sistema de correos: manejo con tokens únicos, expiración, nuevos DTOs y plantillas HTML unificadas | Andrés Gómez      |
 | 06/11/2025 | INB-42 | Se actualizó la documentación con las nuevas implementaciones                                              | Andrés Gómez      |
 | 05/11/2025 | INB-43 | Se configuró CORS dinámico mediante variables de entorno                                                   | Andrés Gómez      |
@@ -337,7 +351,7 @@ inmobix-backend/
 - **Spring Boot 3.5.5**
 - **Spring Data JPA**
 - **PostgreSQL** (Supabase)
-- **Spring Mail** (Envío de correos)
+- **Postmark** (Servicio de correos transaccionales)
 - **Lombok**
 - **BCrypt** (Spring Security Crypto)
 - **Maven**
@@ -363,16 +377,18 @@ Antes de ejecutar el proyecto, configura las siguientes variables de entorno:
 - `DB_USER`: Usuario de la base de datos
 - `DB_PASSWORD`: Contraseña de la base de datos
 
-#### Servidor de correo
-- `MAIL_HOST`: Servidor SMTP (ej: smtp.gmail.com)
-- `MAIL_PORT`: Puerto SMTP (ej: 587)
-- `MAIL_USERNAME`: Email desde el que se enviarán los correos
-- `MAIL_PASSWORD`: Contraseña o App Password del correo
+#### Postmark (Servicio de correos)
+- `POSTMARK_API_TOKEN`: Token de API de Postmark (obligatorio)
+- `POSTMARK_FROM_EMAIL`: Email desde el que se enviarán los correos (default: afgomezv@ufpso.edu.co)
+- `POSTMARK_FROM_NAME`: Nombre del remitente (default: Inmobix)
 
 #### URLs de la aplicación
 - `BACKEND_URL`: URL del backend (ej: http://localhost:8080)
 - `FRONTEND_URL`: URL del frontend (ej: http://localhost:4200)
-    - **IMPORTANTE**: Esta variable también configura el origen CORS permitido
+
+#### Configuración CORS
+- `CORS_ALLOWED_ORIGINS`: Orígenes permitidos separados por comas (default: https://inmobix-frontend.vercel.app,http://localhost:4200)
+- `CORS_ALLOW_CREDENTIALS`: Permitir credenciales (default: true)
 
 #### Puerto del servidor
 - `PORT`: Puerto en el que correrá la aplicación (opcional, default: 8080)
@@ -391,12 +407,12 @@ docker run -p 8080:8080 \
   -e DB_URL=your_db_url \
   -e DB_USER=your_db_user \
   -e DB_PASSWORD=your_db_password \
-  -e MAIL_HOST=smtp.gmail.com \
-  -e MAIL_PORT=587 \
-  -e MAIL_USERNAME=your_email \
-  -e MAIL_PASSWORD=your_password \
+  -e POSTMARK_API_TOKEN=your_postmark_token \
+  -e POSTMARK_FROM_EMAIL=your_email \
+  -e POSTMARK_FROM_NAME=Inmobix \
   -e BACKEND_URL=https://your-backend.com \
   -e FRONTEND_URL=https://your-frontend.com \
+  -e CORS_ALLOWED_ORIGINS=https://your-frontend.com,http://localhost:4200 \
   inmobix-backend
 ```
 
@@ -415,15 +431,20 @@ docker run -p 8080:8080 \
 - Los tokens de verificación, reset, edición y eliminación expiran automáticamente
 - Los usuarios deben verificar su email antes de poder iniciar sesión
 - Las acciones críticas (editar/eliminar cuenta) requieren confirmación por email
+- Rate limiting implementado para prevenir abuso en códigos de verificación
 
-### Correos electrónicos
+### Sistema de Correos (Postmark)
 - Los correos se envían en formato HTML con plantillas personalizadas
+- Incluye versión texto plano como fallback
+- **IMPORTANTE**: `POSTMARK_API_TOKEN` es obligatorio para que el servicio funcione
+- El servicio lanza una excepción al iniciar si el token no está configurado
 
 ### Despliegue
 - El proyecto incluye un `Dockerfile` para facilitar el despliegue
 - Configurado para funcionar en plataformas como Render
 - Las URLs de dominio son configurables mediante variables de entorno
-- **CORS se configura automáticamente** según el `FRONTEND_URL` que definas
+- **CORS se configura automáticamente** según `CORS_ALLOWED_ORIGINS`
+- Soporta múltiples orígenes CORS separados por comas
 
 ### Respuesta Estándar de la API
 
@@ -434,7 +455,7 @@ Todas las respuestas de la API siguen el formato `ApiResponse<T>`:
   "success": true,
   "message": "Mensaje descriptivo",
   "data": "objeto JSON",
-  "timestamp": "2025-11-05T10:30:00"
+  "timestamp": "2025-11-13T10:30:00"
 }
 ```
 
