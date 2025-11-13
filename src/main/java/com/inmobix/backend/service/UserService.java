@@ -12,7 +12,6 @@ import org.springframework.beans.factory.annotation.Value;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
-import jakarta.mail.MessagingException;
 
 import java.time.LocalDateTime;
 import java.util.*;
@@ -60,13 +59,13 @@ public class UserService {
 
         // Generar código de 6 dígitos y token único
         entity.setVerificationCode(generateSixDigitCode());
-        entity.setVerificationToken(generateUniqueToken()); // NUEVO
+        entity.setVerificationToken(generateUniqueToken());
         entity.setVerificationCodeExpiry(LocalDateTime.now().plusMinutes(5));
 
         User saved = repository.save(entity);
         sendVerificationEmail(saved);
 
-        return mapToResponseWithToken(saved); // Incluye el token en la respuesta
+        return mapToResponseWithToken(saved);
     }
 
     @Transactional
@@ -115,7 +114,6 @@ public class UserService {
 
         sendPasswordResetEmail(user);
 
-        // Devolver el token para que el frontend lo guarde
         return new ForgotPasswordResponse(
                 user.getResetPasswordToken(),
                 "Se ha enviado un código de recuperación a tu correo. Válido por 5 minutos."
@@ -131,18 +129,16 @@ public class UserService {
             throw new BadRequestException("Código de verificación inválido");
         }
 
-        // Validar que no haya expirado
         if (user.getVerificationCodeExpiry().isBefore(LocalDateTime.now())) {
             throw new BadRequestException("El código ha expirado. Solicita uno nuevo.");
         }
 
         user.setVerified(true);
         user.setVerificationCode(null);
-        user.setVerificationToken(null); // Limpiar el token usado
+        user.setVerificationToken(null);
         user.setVerificationCodeExpiry(null);
         User saved = repository.save(user);
 
-        // NUEVO - Enviar email de confirmación
         sendVerificationSuccessEmail(saved);
     }
 
@@ -155,18 +151,16 @@ public class UserService {
             throw new BadRequestException("Código inválido");
         }
 
-        // Validar que no haya expirado
         if (user.getResetTokenExpiry().isBefore(LocalDateTime.now())) {
             throw new BadRequestException("El código ha expirado. Solicita uno nuevo.");
         }
 
         user.setPassword(passwordEncoder.encode(newPassword));
         user.setResetToken(null);
-        user.setResetPasswordToken(null); // Limpiar el token usado
+        user.setResetPasswordToken(null);
         user.setResetTokenExpiry(null);
         User saved = repository.save(user);
 
-        // NUEVO - Enviar email de confirmación
         sendPasswordResetSuccessEmail(saved);
     }
 
@@ -179,7 +173,6 @@ public class UserService {
             throw new BadRequestException("Este usuario ya está verificado");
         }
 
-        // Rate limiting - verificar si hay código activo
         if (user.getVerificationCodeExpiry() != null &&
                 user.getVerificationCodeExpiry().isAfter(LocalDateTime.now())) {
 
@@ -196,7 +189,6 @@ public class UserService {
             );
         }
 
-        // Generar nuevo código y nuevo token
         user.setVerificationCode(generateSixDigitCode());
         user.setVerificationToken(generateUniqueToken());
         user.setVerificationCodeExpiry(LocalDateTime.now().plusMinutes(5));
@@ -318,219 +310,231 @@ public class UserService {
     }
 
     private String generateUniqueToken() {
-        // Genera un token único combinando UUID + timestamp
         return UUID.randomUUID().toString() + "_" + System.currentTimeMillis();
     }
 
     private void sendVerificationEmail(User user) {
-        String html = """
-            <html>
-                <body style="font-family: Arial, sans-serif; line-height: 1.6; color: #333;">
-                    <div style="max-width: 600px; margin: 0 auto; padding: 20px; border: 1px solid #ddd; border-radius: 10px;">
-                        <h2 style="color: #2E86C1;">¡Bienvenido a Inmobix, %s!</h2>
-                        <p>Gracias por registrarte. Para activar tu cuenta, utiliza el siguiente código de verificación:</p>
-                        <div style="text-align: center; margin: 30px 0;">
-                            <div style="background:#f0f0f0; padding:20px; border-radius:8px; display:inline-block;">
-                                <h1 style="margin:0; color:#2E86C1; font-size:48px; letter-spacing:8px;">%s</h1>
-                            </div>
-                        </div>
-                        <p style="color: #666; font-size: 14px; text-align: center;">Este código expira en <strong>5 minutos</strong></p>
-                        <p style="color: #666; font-size: 14px;">Si no creaste esta cuenta, ignora este correo.</p>
-                    </div>
-                </body>
-            </html>
-        """.formatted(user.getName(), user.getVerificationCode());
+        String html = String.format("""
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+</head>
+<body style="font-family: Arial, sans-serif; line-height: 1.6; color: #333; margin: 0; padding: 0;">
+    <div style="max-width: 600px; margin: 0 auto; padding: 20px; border: 1px solid #ddd; border-radius: 10px;">
+        <h2 style="color: #2E86C1;">¡Bienvenido a Inmobix, %s!</h2>
+        <p>Gracias por registrarte. Para activar tu cuenta, utiliza el siguiente código de verificación:</p>
+        <div style="text-align: center; margin: 30px 0;">
+            <div style="background:#f0f0f0; padding:20px; border-radius:8px; display:inline-block;">
+                <h1 style="margin:0; color:#2E86C1; font-size:48px; letter-spacing:8px;">%s</h1>
+            </div>
+        </div>
+        <p style="color: #666; font-size: 14px; text-align: center;">Este código expira en <strong>5 minutos</strong></p>
+        <p style="color: #666; font-size: 14px;">Si no creaste esta cuenta, ignora este correo.</p>
+    </div>
+</body>
+</html>
+""", user.getName(), user.getVerificationCode()).stripIndent().trim();
 
-        try {
-            emailService.sendHtmlEmail(user.getEmail(), "Verifica tu cuenta de Inmobix", html);
-        } catch (MessagingException e) {
-            throw new RuntimeException("Error al enviar correo de verificación: " + e.getMessage());
-        }
+        emailService.sendHtmlEmail(user.getEmail(), "Verifica tu cuenta de Inmobix", html);
     }
 
     private void sendResendVerificationEmail(User user) {
-        String html = """
-            <html>
-                <body style="font-family: Arial, sans-serif; line-height: 1.6; color: #333;">
-                    <div style="max-width: 600px; margin: 0 auto; padding: 20px; border: 1px solid #ddd; border-radius: 10px;">
-                        <h2 style="color: #F39C12;">Verifica tu cuenta</h2>
-                        <p>Hola %s,</p>
-                        <p>Has solicitado un nuevo código de verificación. Utiliza el siguiente código para activar tu cuenta:</p>
-                        <div style="text-align: center; margin: 30px 0;">
-                            <div style="background:#f0f0f0; padding:20px; border-radius:8px; display:inline-block;">
-                                <h1 style="margin:0; color:#F39C12; font-size:48px; letter-spacing:8px;">%s</h1>
-                            </div>
-                        </div>
-                        <p style="color: #666; font-size: 14px; text-align: center;">Este código expira en <strong>5 minutos</strong></p>
-                        <p style="color: #666; font-size: 14px;">Si no solicitaste este código, ignora este correo.</p>
-                    </div>
-                </body>
-            </html>
-        """.formatted(user.getName(), user.getVerificationCode());
+        String html = String.format("""
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+</head>
+<body style="font-family: Arial, sans-serif; line-height: 1.6; color: #333; margin: 0; padding: 0;">
+    <div style="max-width: 600px; margin: 0 auto; padding: 20px; border: 1px solid #ddd; border-radius: 10px;">
+        <h2 style="color: #F39C12;">Verifica tu cuenta</h2>
+        <p>Hola %s,</p>
+        <p>Has solicitado un nuevo código de verificación. Utiliza el siguiente código para activar tu cuenta:</p>
+        <div style="text-align: center; margin: 30px 0;">
+            <div style="background:#f0f0f0; padding:20px; border-radius:8px; display:inline-block;">
+                <h1 style="margin:0; color:#F39C12; font-size:48px; letter-spacing:8px;">%s</h1>
+            </div>
+        </div>
+        <p style="color: #666; font-size: 14px; text-align: center;">Este código expira en <strong>5 minutos</strong></p>
+        <p style="color: #666; font-size: 14px;">Si no solicitaste este código, ignora este correo.</p>
+    </div>
+</body>
+</html>
+""", user.getName(), user.getVerificationCode()).stripIndent().trim();
 
-        try {
-            emailService.sendHtmlEmail(user.getEmail(), "Verifica tu cuenta de Inmobix", html);
-        } catch (MessagingException e) {
-            throw new RuntimeException("Error al enviar correo de verificación: " + e.getMessage());
-        }
+        emailService.sendHtmlEmail(user.getEmail(), "Verifica tu cuenta de Inmobix", html);
     }
 
     private void sendVerificationSuccessEmail(User user) {
-        String html = """
-            <html>
-                <body style="font-family: Arial, sans-serif; line-height: 1.6; color: #333;">
-                    <div style="max-width: 600px; margin: 0 auto; padding: 20px; border: 1px solid #ddd; border-radius: 10px;">
-                        <h2 style="color: #27AE60; text-align: center;">¡Verificación Exitosa!</h2>
-                        <p>Hola %s,</p>
-                        <p>¡Excelentes noticias! Tu cuenta ha sido verificada exitosamente.</p>
-                        <div style="background:#f0f0f0; padding:20px; border-radius:8px; margin:20px 0;">
-                            <p style="margin:0; color:#555;"><strong>✅ Tu email está confirmado</strong></p>
-                            <p style="margin:5px 0 0 0; color:#555;"><strong>✅ Ya puedes iniciar sesión</strong></p>
-                            <p style="margin:5px 0 0 0; color:#555;"><strong>✅ Tu cuenta está activa</strong></p>
-                        </div>
-                        <p>Ahora puedes acceder a todas las funcionalidades de Inmobix:</p>
-                        <ul style="color:#555;">
-                            <li>Publicar propiedades</li>
-                            <li>Buscar inmuebles</li>
-                            <li>Contactar vendedores</li>
-                            <li>Gestionar tu perfil</li>
-                        </ul>
-                        <div style="text-align: center; margin: 30px 0;">
-                            <a href="%s" style="background:#2E86C1; color:white; padding:12px 30px; text-decoration:none; border-radius:6px; display:inline-block; font-weight: bold;">
-                                Ir a Inmobix
-                            </a>
-                        </div>
-                        <p style="color: #666; font-size: 14px; text-align: center;">¡Bienvenido a la comunidad Inmobix!</p>
-                    </div>
-                </body>
-            </html>
-        """.formatted(user.getName(), frontendUrl);
+        String html = String.format("""
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+</head>
+<body style="font-family: Arial, sans-serif; line-height: 1.6; color: #333; margin: 0; padding: 0;">
+    <div style="max-width: 600px; margin: 0 auto; padding: 20px; border: 1px solid #ddd; border-radius: 10px;">
+        <h2 style="color: #27AE60; text-align: center;">¡Verificación Exitosa!</h2>
+        <p>Hola %s,</p>
+        <p>¡Excelentes noticias! Tu cuenta ha sido verificada exitosamente.</p>
+        <div style="background:#f0f0f0; padding:20px; border-radius:8px; margin:20px 0;">
+            <p style="margin:0; color:#555;"><strong>✅ Tu email está confirmado</strong></p>
+            <p style="margin:5px 0 0 0; color:#555;"><strong>✅ Ya puedes iniciar sesión</strong></p>
+            <p style="margin:5px 0 0 0; color:#555;"><strong>✅ Tu cuenta está activa</strong></p>
+        </div>
+        <p>Ahora puedes acceder a todas las funcionalidades de Inmobix:</p>
+        <ul style="color:#555;">
+            <li>Publicar propiedades</li>
+            <li>Buscar inmuebles</li>
+            <li>Contactar vendedores</li>
+            <li>Gestionar tu perfil</li>
+        </ul>
+        <div style="text-align: center; margin: 30px 0;">
+            <a href="%s" style="background:#2E86C1; color:white; padding:12px 30px; text-decoration:none; border-radius:6px; display:inline-block; font-weight: bold;">
+                Ir a Inmobix
+            </a>
+        </div>
+        <p style="color: #666; font-size: 14px; text-align: center;">¡Bienvenido a la comunidad Inmobix!</p>
+    </div>
+</body>
+</html>
+""", user.getName(), frontendUrl).stripIndent().trim();
 
-        try {
-            emailService.sendHtmlEmail(user.getEmail(), "✅ Cuenta verificada - Inmobix", html);
-        } catch (MessagingException e) {
-            throw new RuntimeException("Error al enviar correo de confirmación: " + e.getMessage());
-        }
+        emailService.sendHtmlEmail(user.getEmail(), "✅ Cuenta verificada - Inmobix", html);
     }
 
     private void sendPasswordResetEmail(User user) {
-        String html = """
-            <html>
-                <body style="font-family: Arial, sans-serif; line-height: 1.6; color: #333;">
-                    <div style="max-width: 600px; margin: 0 auto; padding: 20px; border: 1px solid #ddd; border-radius: 10px;">
-                        <h2 style="color: #E74C3C;">Recuperar contraseña</h2>
-                        <p>Hola %s,</p>
-                        <p>Recibimos una solicitud para restablecer tu contraseña. Utiliza el siguiente código:</p>
-                        <div style="text-align: center; margin: 30px 0;">
-                            <div style="background:#f0f0f0; padding:20px; border-radius:8px; display:inline-block;">
-                                <h1 style="margin:0; color:#E74C3C; font-size:48px; letter-spacing:8px;">%s</h1>
-                            </div>
-                        </div>
-                        <p style="color: #666; font-size: 14px; text-align: center;">Este código expira en <strong>5 minutos</strong></p>
-                        <p style="color: #666; font-size: 14px;">Si no solicitaste restablecer tu contraseña, ignora este correo.</p>
-                    </div>
-                </body>
-            </html>
-        """.formatted(user.getName(), user.getResetToken());
+        String html = String.format("""
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+</head>
+<body style="font-family: Arial, sans-serif; line-height: 1.6; color: #333; margin: 0; padding: 0;">
+    <div style="max-width: 600px; margin: 0 auto; padding: 20px; border: 1px solid #ddd; border-radius: 10px;">
+        <h2 style="color: #E74C3C;">Recuperar contraseña</h2>
+        <p>Hola %s,</p>
+        <p>Recibimos una solicitud para restablecer tu contraseña. Utiliza el siguiente código:</p>
+        <div style="text-align: center; margin: 30px 0;">
+            <div style="background:#f0f0f0; padding:20px; border-radius:8px; display:inline-block;">
+                <h1 style="margin:0; color:#E74C3C; font-size:48px; letter-spacing:8px;">%s</h1>
+            </div>
+        </div>
+        <p style="color: #666; font-size: 14px; text-align: center;">Este código expira en <strong>5 minutos</strong></p>
+        <p style="color: #666; font-size: 14px;">Si no solicitaste restablecer tu contraseña, ignora este correo.</p>
+    </div>
+</body>
+</html>
+""", user.getName(), user.getResetToken()).stripIndent().trim();
 
-        try {
-            emailService.sendHtmlEmail(user.getEmail(), "Restablecer contraseña - Inmobix", html);
-        } catch (MessagingException e) {
-            throw new RuntimeException("Error al enviar correo de recuperación: " + e.getMessage());
-        }
+        emailService.sendHtmlEmail(user.getEmail(), "Restablecer contraseña - Inmobix", html);
     }
 
     private void sendPasswordResetSuccessEmail(User user) {
-        String html = """
-            <html>
-                <body style="font-family: Arial, sans-serif; line-height: 1.6; color: #333;">
-                    <div style="max-width: 600px; margin: 0 auto; padding: 20px; border: 1px solid #ddd; border-radius: 10px;">
-                        <h2 style="color: #27AE60; text-align: center;">Contraseña Actualizada</h2>
-                        <p>Hola %s,</p>
-                        <p>Tu contraseña ha sido restablecida exitosamente.</p>
-                        <div style="background:#f0f0f0; padding:20px; border-radius:8px; margin:20px 0;">
-                            <p style="margin:0; color:#555;"><strong>✅ Contraseña actualizada</strong></p>
-                            <p style="margin:5px 0 0 0; color:#555;"><strong>✅ Tu cuenta está segura</strong></p>
-                            <p style="margin:5px 0 0 0; color:#555;"><strong>🕐 Fecha: %s</strong></p>
-                        </div>
-                        <p style="color:#666;">Ya puedes iniciar sesión con tu nueva contraseña.</p>
-                        <div style="text-align: center; margin: 30px 0;">
-                            <a href="%s" style="background:#2E86C1; color:white; padding:12px 30px; text-decoration:none; border-radius:6px; display:inline-block; font-weight: bold;">
-                                Iniciar Sesión
-                            </a>
-                        </div>
-                        <div style="background:#fff3cd; border-left:4px solid #ffc107; padding:15px; margin:20px 0;">
-                            <p style="margin:0; color:#856404;"><strong>⚠️ Aviso de Seguridad</strong></p>
-                            <p style="margin:5px 0 0 0; color:#856404;">Si no solicitaste este cambio, tu cuenta podría estar comprometida. Por favor, contacta a soporte inmediatamente.</p>
-                        </div>
-                        <p style="color: #666; font-size: 14px; text-align: center;">Equipo de Inmobix</p>
-                    </div>
-                </body>
-            </html>
-        """.formatted(user.getName(), java.time.LocalDateTime.now().format(java.time.format.DateTimeFormatter.ofPattern("dd/MM/yyyy HH:mm")), frontendUrl);
+        String dateTime = java.time.LocalDateTime.now().format(
+                java.time.format.DateTimeFormatter.ofPattern("dd/MM/yyyy HH:mm")
+        );
 
-        try {
-            emailService.sendHtmlEmail(user.getEmail(), "✅ Contraseña actualizada - Inmobix", html);
-        } catch (MessagingException e) {
-            throw new RuntimeException("Error al enviar correo de confirmación: " + e.getMessage());
-        }
+        String html = String.format("""
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+</head>
+<body style="font-family: Arial, sans-serif; line-height: 1.6; color: #333; margin: 0; padding: 0;">
+    <div style="max-width: 600px; margin: 0 auto; padding: 20px; border: 1px solid #ddd; border-radius: 10px;">
+        <h2 style="color: #27AE60; text-align: center;">Contraseña Actualizada</h2>
+        <p>Hola %s,</p>
+        <p>Tu contraseña ha sido restablecida exitosamente.</p>
+        <div style="background:#f0f0f0; padding:20px; border-radius:8px; margin:20px 0;">
+            <p style="margin:0; color:#555;"><strong>✅ Contraseña actualizada</strong></p>
+            <p style="margin:5px 0 0 0; color:#555;"><strong>✅ Tu cuenta está segura</strong></p>
+            <p style="margin:5px 0 0 0; color:#555;"><strong>🕐 Fecha: %s</strong></p>
+        </div>
+        <p style="color:#666;">Ya puedes iniciar sesión con tu nueva contraseña.</p>
+        <div style="text-align: center; margin: 30px 0;">
+            <a href="%s" style="background:#2E86C1; color:white; padding:12px 30px; text-decoration:none; border-radius:6px; display:inline-block; font-weight: bold;">
+                Iniciar Sesión
+            </a>
+        </div>
+        <div style="background:#fff3cd; border-left:4px solid #ffc107; padding:15px; margin:20px 0;">
+            <p style="margin:0; color:#856404;"><strong>⚠️ Aviso de Seguridad</strong></p>
+            <p style="margin:5px 0 0 0; color:#856404;">Si no solicitaste este cambio, tu cuenta podría estar comprometida. Por favor, contacta a soporte inmediatamente.</p>
+        </div>
+        <p style="color: #666; font-size: 14px; text-align: center;">Equipo de Inmobix</p>
+    </div>
+</body>
+</html>
+""", user.getName(), dateTime, frontendUrl).stripIndent().trim();
+
+        emailService.sendHtmlEmail(user.getEmail(), "✅ Contraseña actualizada - Inmobix", html);
     }
 
     private void sendEditConfirmationEmail(User user) {
         String confirmUrl = frontendUrl + "/confirm-edit?token=" + user.getEditToken();
-        String html = """
-            <html>
-                <body style="font-family: Arial, sans-serif; line-height: 1.6; color: #333;">
-                    <div style="max-width: 600px; margin: 0 auto; padding: 20px; border: 1px solid #ddd; border-radius: 10px;">
-                        <h2 style="color: #F39C12;">Confirmar edición de cuenta</h2>
-                        <p>Hola %s,</p>
-                        <p>Has solicitado editar tu información. Para confirmar los cambios, haz clic en el botón:</p>
-                        <div style="text-align: center; margin: 30px 0;">
-                            <a href="%s" style="background:#F39C12; color:white; padding:12px 30px; text-decoration:none; border-radius:6px; display:inline-block; font-weight: bold;">
-                                Confirmar cambios
-                            </a>
-                        </div>
-                        <p style="color: #666; font-size: 14px;">Este enlace expira en 15 minutos.</p>
-                        <p style="color: #666; font-size: 14px;">Si no solicitaste editar tu cuenta, ignora este correo.</p>
-                    </div>
-                </body>
-            </html>
-        """.formatted(user.getName(), confirmUrl);
 
-        try {
-            emailService.sendHtmlEmail(user.getEmail(), "Confirmar edición - Inmobix", html);
-        } catch (MessagingException e) {
-            throw new RuntimeException("Error al enviar correo de confirmación: " + e.getMessage());
-        }
+        String html = String.format("""
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+</head>
+<body style="font-family: Arial, sans-serif; line-height: 1.6; color: #333; margin: 0; padding: 0;">
+    <div style="max-width: 600px; margin: 0 auto; padding: 20px; border: 1px solid #ddd; border-radius: 10px;">
+        <h2 style="color: #F39C12;">Confirmar edición de cuenta</h2>
+        <p>Hola %s,</p>
+        <p>Has solicitado editar tu información. Para confirmar los cambios, haz clic en el botón:</p>
+        <div style="text-align: center; margin: 30px 0;">
+            <a href="%s" style="background:#F39C12; color:white; padding:12px 30px; text-decoration:none; border-radius:6px; display:inline-block; font-weight: bold;">
+                Confirmar cambios
+            </a>
+        </div>
+        <p style="color: #666; font-size: 14px;">Este enlace expira en 15 minutos.</p>
+        <p style="color: #666; font-size: 14px;">Si no solicitaste editar tu cuenta, ignora este correo.</p>
+    </div>
+</body>
+</html>
+""", user.getName(), confirmUrl).stripIndent().trim();
+
+        emailService.sendHtmlEmail(user.getEmail(), "Confirmar edición - Inmobix", html);
     }
 
     private void sendDeleteConfirmationEmail(User user) {
         String confirmUrl = backendUrl + "/api/user/confirm-delete?token=" + user.getDeleteToken();
-        String html = """
-            <html>
-                <body style="font-family: Arial, sans-serif; line-height: 1.6; color: #333;">
-                    <div style="max-width: 600px; margin: 0 auto; padding: 20px; border: 1px solid #ddd; border-radius: 10px;">
-                        <h2 style="color: #C0392B;">⚠️ Confirmar eliminación de cuenta</h2>
-                        <p>Hola %s,</p>
-                        <p>Has solicitado eliminar tu cuenta de Inmobix. Esta acción es <strong>irreversible</strong>.</p>
-                        <p>Si estás seguro, haz clic en el botón:</p>
-                        <div style="text-align: center; margin: 30px 0;">
-                            <a href="%s" style="background:#C0392B; color:white; padding:12px 30px; text-decoration:none; border-radius:6px; display:inline-block; font-weight: bold;">
-                                Eliminar mi cuenta
-                            </a>
-                        </div>
-                        <p style="color: #666; font-size: 14px;">Este enlace expira en 15 minutos.</p>
-                        <p style="color: #666; font-size: 14px;">Si no solicitaste eliminar tu cuenta, ignora este correo y cambia tu contraseña inmediatamente.</p>
-                    </div>
-                </body>
-            </html>
-        """.formatted(user.getName(), confirmUrl);
 
-        try {
-            emailService.sendHtmlEmail(user.getEmail(), "⚠️ Confirmar eliminación - Inmobix", html);
-        } catch (MessagingException e) {
-            throw new RuntimeException("Error al enviar correo de confirmación: " + e.getMessage());
-        }
+        String html = String.format("""
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+</head>
+<body style="font-family: Arial, sans-serif; line-height: 1.6; color: #333; margin: 0; padding: 0;">
+    <div style="max-width: 600px; margin: 0 auto; padding: 20px; border: 1px solid #ddd; border-radius: 10px;">
+        <h2 style="color: #C0392B;">⚠️ Confirmar eliminación de cuenta</h2>
+        <p>Hola %s,</p>
+        <p>Has solicitado eliminar tu cuenta de Inmobix. Esta acción es <strong>irreversible</strong>.</p>
+        <p>Si estás seguro, haz clic en el botón:</p>
+        <div style="text-align: center; margin: 30px 0;">
+            <a href="%s" style="background:#C0392B; color:white; padding:12px 30px; text-decoration:none; border-radius:6px; display:inline-block; font-weight: bold;">
+                Eliminar mi cuenta
+            </a>
+        </div>
+        <p style="color: #666; font-size: 14px;">Este enlace expira en 15 minutos.</p>
+        <p style="color: #666; font-size: 14px;">Si no solicitaste eliminar tu cuenta, ignora este correo y cambia tu contraseña inmediatamente.</p>
+    </div>
+</body>
+</html>
+""", user.getName(), confirmUrl).stripIndent().trim();
+
+        emailService.sendHtmlEmail(user.getEmail(), "⚠️ Confirmar eliminación - Inmobix", html);
     }
 
     private UserResponse mapToResponse(User user) {
