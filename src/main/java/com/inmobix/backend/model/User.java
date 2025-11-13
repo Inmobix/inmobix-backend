@@ -49,11 +49,18 @@ public class User {
     @Column(nullable = false)
     private Role role = Role.USER;
 
+    // Sistema de verificación de email
     private boolean verified = false;
     private String verificationCode;
+    private String verificationToken;
+    private LocalDateTime verificationCodeExpiry;
+
+    // Sistema de recuperación de contraseña
     private String resetToken;
+    private String resetPasswordToken;
     private LocalDateTime resetTokenExpiry;
 
+    // Tokens para editar y eliminar cuenta
     private String editToken;
     private LocalDateTime editTokenExpiry;
     private String deleteToken;

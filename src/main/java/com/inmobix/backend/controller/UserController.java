@@ -37,31 +37,33 @@ public class UserController {
     }
 
     @PostMapping("/forgot-password")
-    public ResponseEntity<ApiResponse<Void>> forgotPassword(@Valid @RequestBody ForgotPasswordRequest request) {
-        userService.forgotPassword(request.getEmail());
+    public ResponseEntity<ApiResponse<ForgotPasswordResponse>> forgotPassword(@Valid @RequestBody ForgotPasswordRequest request) {
+        ForgotPasswordResponse response = userService.forgotPassword(request.getEmail());
         return ResponseEntity
-                .ok(ApiResponse.success("Se ha enviado un enlace de recuperación a tu correo", null));
+                .ok(ApiResponse.success(response.getMessage(), response));
     }
 
-    @GetMapping("/user/verify")
-    public ResponseEntity<ApiResponse<Void>> verifyEmail(@RequestParam String code) {
-        userService.verifyEmail(code);
+    // NUEVO - Verificación con token único
+    @PostMapping("/user/verify")
+    public ResponseEntity<ApiResponse<Void>> verifyEmail(@Valid @RequestBody VerifyWithTokenRequest request) {
+        userService.verifyEmail(request.getVerificationToken(), request.getCode());
         return ResponseEntity
                 .ok(ApiResponse.success("¡Correo verificado exitosamente! Ya puedes iniciar sesión.", null));
     }
 
+    // ACTUALIZADO - Reset con token único
     @PostMapping("/user/reset-password")
-    public ResponseEntity<ApiResponse<Void>> resetPassword(@Valid @RequestBody ResetPasswordRequest request) {
-        userService.resetPassword(request.getToken(), request.getNewPassword());
+    public ResponseEntity<ApiResponse<Void>> resetPassword(@Valid @RequestBody ResetPasswordWithTokenRequest request) {
+        userService.resetPassword(request.getResetPasswordToken(), request.getCode(), request.getNewPassword());
         return ResponseEntity
                 .ok(ApiResponse.success("Contraseña restablecida correctamente", null));
     }
 
     @PostMapping("/user/resend-verification")
-    public ResponseEntity<ApiResponse<Void>> resendVerificationEmail(@Valid @RequestBody ForgotPasswordRequest request) {
-        userService.resendVerificationEmail(request.getEmail());
+    public ResponseEntity<ApiResponse<UserResponse>> resendVerificationEmail(@Valid @RequestBody ForgotPasswordRequest request) {
+        UserResponse response = userService.resendVerificationEmail(request.getEmail());
         return ResponseEntity
-                .ok(ApiResponse.success("Correo de verificación reenviado", null));
+                .ok(ApiResponse.success("Código de verificación reenviado. Válido por 5 minutos.", response));
     }
 
     // Buscar por documento (requiere autenticación)
@@ -75,7 +77,7 @@ public class UserController {
                 .ok(ApiResponse.success("Usuario encontrado", response));
     }
 
-    // MODIFICADO - Solo ADMIN
+    // Solo ADMIN
     @GetMapping("/users")
     public ResponseEntity<ApiResponse<List<UserResponse>>> getAllUsers(
             @RequestHeader("X-User-Role") Role requesterRole) {

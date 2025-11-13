@@ -10,7 +10,10 @@ import lombok.NoArgsConstructor;
 @Data
 @AllArgsConstructor
 @NoArgsConstructor
-public class ResetPasswordRequest {
+public class ResetPasswordWithTokenRequest {
+
+    @NotBlank(message = "El token de recuperación es obligatorio")
+    private String resetPasswordToken;
 
     @NotBlank(message = "El código es obligatorio")
     @Pattern(regexp = "^[0-9]{6}$", message = "El código debe tener 6 dígitos")
