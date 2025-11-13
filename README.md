@@ -276,6 +276,7 @@ inmobix-backend/
 
 | Fecha      | Ticket | Cambio                                                                                                     | Autor             |
 |------------|--------|------------------------------------------------------------------------------------------------------------|-------------------|
+| 12/11/2025 | INB-46 | Se configuró CORS                                                                                          | Andrés Gómez      |
 | 12/11/2025 | INB-45 | Mejorar sistema de correos: manejo con tokens únicos, expiración, nuevos DTOs y plantillas HTML unificadas | Andrés Gómez      |
 | 06/11/2025 | INB-42 | Se actualizó la documentación con las nuevas implementaciones                                              | Andrés Gómez      |
 | 05/11/2025 | INB-43 | Se configuró CORS dinámico mediante variables de entorno                                                   | Andrés Gómez      |
