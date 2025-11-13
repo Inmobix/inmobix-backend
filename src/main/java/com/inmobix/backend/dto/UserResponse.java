@@ -18,4 +18,10 @@ public class UserResponse {
     private String phone;
     private LocalDate birthDate;
     private String role;
+
+    // NUEVO - Token para verificación (solo se devuelve en registro)
+    private String verificationToken;
+
+    // NUEVO - Token para reset password (solo se devuelve en forgot-password)
+    private String resetPasswordToken;
 }
