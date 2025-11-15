@@ -1,0 +1,23 @@
+<!-- Navbar fijo en la parte superior -->
+<app-navbar></app-navbar>
+
+<!-- Contenido principal con padding-top para compensar el navbar fijo -->
+<main class="pt-16">
+  <!-- Sección Hero con ID para scroll desde navbar -->
+  <section id="hero">
+    <app-hero></app-hero>
+  </section>
+
+  <!-- Sección de Beneficios con ID para scroll desde navbar -->
+  <section id="benefits" class="container mx-auto px-4">
+    <app-property-benefits></app-property-benefits>
+  </section>
+
+  <!-- Sección de Propiedades por Ubicación con ID para scroll desde navbar -->
+  <section id="locations">
+    <app-location-properties></app-location-properties>
+  </section>
+
+  <!-- Footer -->
+  <app-footer></app-footer>
+</main>

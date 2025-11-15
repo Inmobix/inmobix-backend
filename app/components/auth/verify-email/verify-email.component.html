@@ -1,0 +1,74 @@
+<div class="min-h-screen flex items-center justify-center bg-gradient-to-br from-blue-50 to-indigo-100 px-4 py-12">
+  <div class="w-full max-w-md">
+    <div class="bg-white rounded-2xl shadow-xl p-8 space-y-6">
+      <!-- Header -->
+      <div class="text-center">
+        <div class="mx-auto w-16 h-16 bg-indigo-100 rounded-full flex items-center justify-center mb-4">
+          <svg class="w-8 h-8 text-indigo-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 8l7.89 5.26a2 2 0 002.22 0L21 8M5 19h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z" />
+          </svg>
+        </div>
+        <h2 class="text-3xl font-bold text-gray-900">Verifica tu email</h2>
+        <p class="mt-2 text-gray-600">Ingresa el código de 6 dígitos que te enviamos</p>
+      </div>
+
+      <!-- Form -->
+      <form (ngSubmit)="onSubmit()" class="space-y-6">
+        <!-- Código -->
+        <div>
+          <label for="code" class="block text-sm font-medium text-gray-700 mb-2">
+            Código de verificación
+          </label>
+          <input
+            type="text"
+            id="code"
+            name="code"
+            [(ngModel)]="code"
+            (blur)="validateCode()"
+            maxlength="6"
+            placeholder="000000"
+            class="w-full px-4 py-3 border rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-transparent text-center text-2xl tracking-widest"
+            [class.border-red-500]="codeError"
+            required
+          />
+          <p *ngIf="codeError" class="mt-1 text-sm text-red-600">{{ codeError }}</p>
+        </div>
+
+        <!-- Submit Button -->
+        <button
+          type="submit"
+          [disabled]="isLoading"
+          class="w-full bg-indigo-600 text-white py-3 px-4 rounded-lg font-semibold hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:ring-offset-2 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+        >
+          <span *ngIf="!isLoading">Verificar email</span>
+          <span *ngIf="isLoading" class="flex items-center justify-center">
+            <svg class="animate-spin h-5 w-5 mr-2" viewBox="0 0 24 24">
+              <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4" fill="none" />
+              <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z" />
+            </svg>
+            Verificando...
+          </span>
+        </button>
+
+        <!-- Resend Code -->
+        <div class="text-center">
+          <button
+            type="button"
+            (click)="resendCode()"
+            [disabled]="isLoading"
+            class="text-indigo-600 hover:text-indigo-700 text-sm font-medium disabled:opacity-50"
+          >
+            ¿No recibiste el código? Reenviar
+          </button>
+        </div>
+      </form>
+
+      <!-- Back to Login -->
+      <div class="text-center pt-4 border-t">
+        <a routerLink="/login" class="text-sm text-gray-600 hover:text-gray-900">
+          ← Volver al inicio de sesión
+        </a>
+      </div>
+    </div>
+  </div>
+</div>

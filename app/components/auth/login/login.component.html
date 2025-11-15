@@ -1,0 +1,87 @@
+<section class="min-h-screen flex items-center justify-center bg-gray-50 px-4">
+  <div class="max-w-md w-full bg-white rounded-xl shadow-lg p-8">
+    <h2 class="text-3xl font-bold text-gray-900 text-center mb-6">
+      Iniciar Sesión
+    </h2>
+
+    <form class="space-y-4" (ngSubmit)="onSubmit()">
+      <!-- Correo electrónico -->
+      <div>
+        <label for="email" class="block text-gray-700 font-medium mb-1"
+          >Correo electrónico</label
+        >
+        <input
+          type="email"
+          id="email"
+          [(ngModel)]="email"
+          name="email"
+          (blur)="validateEmail()"
+          placeholder="Ingresa tu correo"
+          [disabled]="isLoading"
+          class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none placeholder-gray-400 disabled:bg-gray-100"
+          [class.border-red-500]="emailError"
+        />
+        <div *ngIf="emailError" class="text-red-500 text-sm mt-1">
+          {{ emailError }}
+        </div>
+      </div>
+
+      <!-- Contraseña -->
+      <div>
+        <label for="password" class="block text-gray-700 font-medium mb-1"
+          >Contraseña</label
+        >
+        <input
+          type="password"
+          id="password"
+          [(ngModel)]="password"
+          name="password"
+          (blur)="validatePassword()"
+          placeholder="Ingresa tu contraseña"
+          [disabled]="isLoading"
+          class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none placeholder-gray-400 disabled:bg-gray-100"
+          [class.border-red-500]="passwordError"
+        />
+        <div *ngIf="passwordError" class="text-red-500 text-sm mt-1">
+          {{ passwordError }}
+        </div>
+      </div>
+
+      <!-- Olvidé contraseña -->
+      <div class="text-right">
+        <a
+          [routerLink]="['/forgot-password']"
+          class="text-blue-600 hover:text-blue-800 text-sm"
+          >¿Olvidaste tu contraseña?</a
+        >
+      </div>
+
+      <!-- Iniciar Sesión -->
+      <button
+        type="submit"
+        [disabled]="isLoading"
+        class="w-full bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-lg font-semibold cursor-pointer transition-colors disabled:bg-blue-300 disabled:cursor-not-allowed flex items-center justify-center"
+      >
+        <span *ngIf="!isLoading">Iniciar Sesión</span>
+        <span *ngIf="isLoading" class="flex items-center">
+          <iconify-icon icon="svg-spinners:180-ring" width="24" height="24" />
+          Iniciando sesión...
+        </span>
+      </button>
+    </form>
+
+    <!-- Registrate -->
+    <p class="text-center text-gray-600 mt-6">
+      ¿No tienes cuenta?
+      <a [routerLink]="['/register']" class="text-blue-600 hover:text-blue-800"
+        >Regístrate</a
+      >
+    </p>
+    <!-- Ir al inicio -->
+    <p class="text-center text-gray-500 mt-4">
+      <a [routerLink]="['/']" class="text-blue-600 hover:text-blue-800"
+        >Ir al inicio</a
+      >
+    </p>
+  </div>
+</section>
