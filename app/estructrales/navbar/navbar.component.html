@@ -1,0 +1,192 @@
+<nav class="fixed z-50 w-full bg-white shadow-sm">
+    <div class="container mx-auto px-4">
+      <div class="flex items-center justify-between h-16">
+        <!-- Logo -->
+        <div class="flex items-center">
+          <a routerLink="/" class="flex items-center">
+            <div class="w-8 h-8 rounded-full bg-indigo-500 flex items-center justify-center mr-2">
+              <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 text-white" viewBox="0 0 20 20" fill="currentColor">
+                <path d="M10.707 2.293a1 1 0 00-1.414 0l-7 7a1 1 0 001.414 1.414L4 10.414V17a1 1 0 001 1h2a1 1 0 001-1v-2a1 1 0 011-1h2a1 1 0 011 1v2a1 1 0 001 1h2a1 1 0 001-1v-6.586l.293.293a1 1 0 001.414-1.414l-7-7z" />
+              </svg>
+            </div>
+            <span class="font-bold text-lg" [ngStyle]="{'color': colors.textDark}">Mobi</span>
+          </a>
+        </div>
+
+        <!-- Nav Links - Desktop -->
+        <div class="hidden md:flex space-x-6">
+          <!-- Actualizado el evento click para usar el nuevo scrollToSection sin parámetro event -->
+          <a *ngFor="let link of navLinks"
+             [routerLink]="!isScrollLink(link.url) ? link.url : null"
+             [href]="isScrollLink(link.url) ? link.url : null"
+             (click)="isScrollLink(link.url) ? scrollToSection(link.url) : null"
+             routerLinkActive="text-indigo-600 border-b-2 border-indigo-600"
+             [routerLinkActiveOptions]="{ exact: true }"
+             class="text-sm font-medium hover:text-indigo-600 transition-all duration-200 flex items-center px-2 py-1 relative group cursor-pointer"
+             [ngStyle]="{'color': colors.textDark}">
+            <span>{{ link.name }}</span>
+            <svg *ngIf="link.hasIcon && link.iconType"
+                 xmlns="http://www.w3.org/2000/svg"
+                 class="h-4 w-4 ml-1 transition-transform duration-200 group-hover:scale-110"
+                 fill="none"
+                 viewBox="0 0 24 24"
+                 stroke="currentColor">
+              <path stroke-linecap="round"
+                    stroke-linejoin="round"
+                    stroke-width="2"
+                    [attr.d]="getIconSvg(link.iconType)" />
+            </svg>
+          </a>
+        </div>
+
+        <!-- Auth Buttons - Desktop -->
+        <div class="hidden md:flex items-center space-x-4">
+          <!-- ⚠️ Botones de autenticación simplificados (sin funcionalidad) -->
+          <a routerLink="/login"
+             routerLinkActive="text-indigo-600"
+             class="text-sm font-medium hover:text-indigo-600 transition-colors px-3 py-1 rounded-md"
+             [ngStyle]="{'color': colors.textDark}">
+            Iniciar sesión
+          </a>
+          <a routerLink="/register"
+             class="text-sm font-medium bg-indigo-500 hover:bg-indigo-600 px-4 py-2 rounded-md transition-all duration-200 transform hover:scale-105 shadow-md hover:shadow-lg"
+             [ngStyle]="{'color': colors.buttonText}">
+            Registrarse
+          </a>
+
+          <!-- ⚠️ COMENTADO: Sección de usuario autenticado - Descomentar cuando implementes autenticación -->
+          <!--
+          <ng-container *ngIf="currentUser">
+            <div class="flex items-center space-x-3">
+              <div class="flex items-center space-x-3 bg-gray-50 px-3 py-1 rounded-full">
+                <div class="relative">
+                  <img *ngIf="hasUserPhoto()"
+                       [src]="getUserPhotoURL()"
+                       [alt]="getUserDisplayName()"
+                       class="w-8 h-8 rounded-full object-cover border-2 border-indigo-200 hover:border-indigo-400 transition-colors"
+                       onerror="this.style.display='none'; this.nextElementSibling.style.display='flex'">
+
+                  <div [ngClass]="{'hidden': hasUserPhoto()}"
+                       class="w-8 h-8 bg-indigo-500 rounded-full flex items-center justify-center text-white text-xs font-semibold">
+                    {{ getUserInitials() }}
+                  </div>
+                </div>
+
+                <span class="text-sm font-medium" [ngStyle]="{'color': colors.textDark}">
+                  {{ getUserDisplayName() }}
+                </span>
+              </div>
+              <button (click)="logout()"
+                      class="text-sm font-medium bg-red-500 hover:bg-red-600 px-4 py-2 rounded-md transition-all duration-200 text-white transform hover:scale-105 shadow-md hover:shadow-lg">
+                Cerrar sesión
+              </button>
+            </div>
+          </ng-container>
+          -->
+        </div>
+
+        <!-- Mobile menu button -->
+        <div class="md:hidden">
+          <button (click)="toggleMobileMenu()"
+                  class="text-gray-600 hover:text-gray-900 focus:outline-none transition-colors p-2 rounded-md hover:bg-gray-100">
+            <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6 transition-transform duration-200" [class.rotate-90]="isMobileMenuOpen" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+              <path *ngIf="!isMobileMenuOpen" stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 12h16M4 18h16" />
+              <path *ngIf="isMobileMenuOpen" stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" />
+            </svg>
+          </button>
+        </div>
+      </div>
+    </div>
+
+    <!-- Mobile menu, show/hide based on menu state -->
+    <div *ngIf="isMobileMenuOpen"
+         class="md:hidden bg-white shadow-lg border-t border-gray-100 transition-all duration-300 ease-in-out">
+      <div class="container mx-auto px-4 py-4 space-y-2">
+        <!-- Actualizado el evento click para usar el nuevo scrollToSection sin parámetro event -->
+        <a *ngFor="let link of navLinks"
+           [routerLink]="!isScrollLink(link.url) ? link.url : null"
+           [href]="isScrollLink(link.url) ? link.url : null"
+           (click)="isScrollLink(link.url) ? scrollToSection(link.url) : (isMobileMenuOpen = false)"
+           routerLinkActive="bg-indigo-50 text-indigo-600 border-l-4 border-indigo-600"
+           [routerLinkActiveOptions]="{ exact: true }"
+           class="flex items-center justify-between py-3 px-4 text-base font-medium hover:bg-gray-50 transition-all duration-200 rounded-md cursor-pointer"
+           [ngStyle]="{'color': colors.textDark}">
+          <div class="flex items-center">
+            <svg *ngIf="link.hasIcon && link.iconType"
+                 xmlns="http://www.w3.org/2000/svg"
+                 class="h-5 w-5 mr-3"
+                 fill="none"
+                 viewBox="0 0 24 24"
+                 stroke="currentColor">
+              <path stroke-linecap="round"
+                    stroke-linejoin="round"
+                    stroke-width="2"
+                    [attr.d]="getIconSvg(link.iconType)" />
+            </svg>
+            <span>{{ link.name }}</span>
+          </div>
+          <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4 text-gray-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7" />
+          </svg>
+        </a>
+
+        <div class="pt-4 border-t border-gray-100">
+          <!-- ⚠️ Botones de autenticación simplificados (móvil) -->
+          <div class="space-y-2">
+            <a routerLink="/login"
+               routerLinkActive="bg-indigo-50 text-indigo-600"
+               (click)="isMobileMenuOpen = false"
+               class="flex items-center justify-center w-full text-base font-medium hover:bg-gray-50 transition-colors py-3 px-4 rounded-md"
+               [ngStyle]="{'color': colors.textDark}">
+              <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 mr-2" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 16l-4-4m0 0l4-4m-4 4h14m-5 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h7a3 3 0 013 3v1" />
+              </svg>
+              Iniciar sesión
+            </a>
+            <a routerLink="/register"
+               (click)="isMobileMenuOpen = false"
+               class="flex items-center justify-center w-full text-base font-medium bg-indigo-500 hover:bg-indigo-600 px-4 py-3 rounded-md transition-colors"
+               [ngStyle]="{'color': colors.buttonText}">
+              <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 mr-2" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M18 9v3m0 0v3m0-3h3m-3 0h-3m-2-5a4 4 0 11-8 0 4 4 0 018 0zM3 20a6 6 0 0112 0v1H3v-1z" />
+              </svg>
+              Registrarse
+            </a>
+          </div>
+
+          <!-- ⚠️ COMENTADO: Sección de usuario autenticado (móvil) - Descomentar cuando implementes autenticación -->
+          <!--
+          <ng-container *ngIf="currentUser">
+            <div class="space-y-3">
+              <div class="flex items-center justify-center py-3 px-4 bg-gray-50 rounded-md">
+                <div class="relative mr-3">
+                  <img *ngIf="hasUserPhoto()"
+                       [src]="getUserPhotoURL()"
+                       [alt]="getUserDisplayName()"
+                       class="w-10 h-10 rounded-full object-cover border-2 border-indigo-200"
+                       onerror="this.style.display='none'; this.nextElementSibling.style.display='flex'">
+
+                  <div [ngClass]="{'hidden': hasUserPhoto()}"
+                       class="w-10 h-10 bg-indigo-500 rounded-full flex items-center justify-center text-white text-sm font-semibold">
+                    {{ getUserInitials() }}
+                  </div>
+                </div>
+
+                <span class="text-base font-medium" [ngStyle]="{'color': colors.textDark}">
+                  {{ getUserDisplayName() }}
+                </span>
+              </div>
+              <button (click)="logout(); isMobileMenuOpen = false"
+                      class="flex items-center justify-center w-full text-base font-medium bg-red-500 hover:bg-red-600 px-4 py-3 rounded-md transition-colors text-white">
+                <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 mr-2" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1" />
+                </svg>
+                Cerrar sesión
+              </button>
+            </div>
+          </ng-container>
+          -->
+        </div>
+      </div>
+    </div>
+</nav>
