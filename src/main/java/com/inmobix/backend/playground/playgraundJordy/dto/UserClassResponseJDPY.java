@@ -1,4 +1,4 @@
-package com.inmobix.backend.playgraundJordy.dto;
+package com.inmobix.backend.playground.playgraundJordy.dto;
 
 import lombok.AllArgsConstructor;
 import lombok.Data;

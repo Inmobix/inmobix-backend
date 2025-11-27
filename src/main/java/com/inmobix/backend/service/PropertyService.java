@@ -25,6 +25,7 @@ public class PropertyService {
     }
 
     // Crear una nueva propiedad
+    @SuppressWarnings("null")
     @Transactional
     public PropertyResponse create(PropertyRequest request) {
         Property property = new Property();
@@ -54,12 +55,15 @@ public class PropertyService {
         return mapToResponse(saved);
     }
 
-    public PropertyResponse getById(Long id) {
+    @SuppressWarnings("null")
+    @Transactional(readOnly = true)
+    public PropertyResponse getById(UUID id) {
         Property property = propertyRepository.findById(id)
                 .orElseThrow(() -> new RuntimeException("Propiedad no encontrada con id " + id));
         return mapToResponse(property);
     }
 
+    @Transactional(readOnly = true)
     public List<PropertyResponse> getAll() {
         return propertyRepository.findAll()
                 .stream()
@@ -68,7 +72,8 @@ public class PropertyService {
     }
 
     @Transactional
-    public PropertyResponse update(Long id, PropertyRequest request) {
+    public PropertyResponse update(UUID id, PropertyRequest request) {
+        @SuppressWarnings("null")
         Property property = propertyRepository.findById(id)
                 .orElseThrow(() -> new RuntimeException("Propiedad no encontrada con id " + id));
 
@@ -91,14 +96,16 @@ public class PropertyService {
         return mapToResponse(updated);
     }
 
+    @SuppressWarnings("null")
     @Transactional
-    public void delete(Long id) {
+    public void delete(UUID id) {
         if (!propertyRepository.existsById(id)) {
             throw new RuntimeException("Propiedad no encontrada con id " + id);
         }
         propertyRepository.deleteById(id);
     }
 
+    @Transactional(readOnly = true)
     public List<PropertyResponse> getAvailableProperties() {
         return propertyRepository.findByAvailableTrue()
                 .stream()
@@ -106,6 +113,7 @@ public class PropertyService {
                 .collect(Collectors.toList());
     }
 
+    @Transactional(readOnly = true)
     public List<PropertyResponse> getByCity(String city) {
         return propertyRepository.findByCity(city)
                 .stream()
@@ -113,6 +121,7 @@ public class PropertyService {
                 .collect(Collectors.toList());
     }
 
+    @Transactional(readOnly = true)
     public List<PropertyResponse> getByPropertyType(String propertyType) {
         return propertyRepository.findByPropertyType(propertyType)
                 .stream()
@@ -120,6 +129,7 @@ public class PropertyService {
                 .collect(Collectors.toList());
     }
 
+    @Transactional(readOnly = true)
     public List<PropertyResponse> getByTransactionType(String transactionType) {
         return propertyRepository.findByTransactionType(transactionType)
                 .stream()
@@ -127,6 +137,7 @@ public class PropertyService {
                 .collect(Collectors.toList());
     }
 
+    @Transactional(readOnly = true)
     public List<PropertyResponse> getByPriceRange(BigDecimal minPrice, BigDecimal maxPrice) {
         return propertyRepository.findByPriceBetween(minPrice, maxPrice)
                 .stream()
@@ -135,6 +146,7 @@ public class PropertyService {
     }
 
     // Buscar propiedades de un usuario usando UUID
+    @Transactional(readOnly = true)
     public List<PropertyResponse> getByUserId(UUID userId) {
         return propertyRepository.findByUserId(userId)
                 .stream()
