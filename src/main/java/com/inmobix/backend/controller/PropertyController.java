@@ -23,7 +23,12 @@ public class PropertyController {
 
     // POST /api/properties - Crear nueva propiedad
     @PostMapping
-    public ResponseEntity<PropertyResponse> createProperty(@Valid @RequestBody PropertyRequest request) {
+    public ResponseEntity<PropertyResponse> createProperty(
+            @Valid @RequestBody PropertyRequest request,
+            @RequestHeader(value = "X-User-Id", required = false) UUID userId) {
+        if (userId != null) {
+            request.setUserId(userId);
+        }
         PropertyResponse response = propertyService.create(request);
         return ResponseEntity.status(HttpStatus.CREATED).body(response);
     }
@@ -36,7 +41,7 @@ public class PropertyController {
 
     // GET /api/properties/{id} - Obtener propiedad por ID
     @GetMapping("/{id}")
-    public ResponseEntity<PropertyResponse> getPropertyById(@PathVariable Long id) {
+    public ResponseEntity<PropertyResponse> getPropertyById(@PathVariable UUID id) {
         PropertyResponse response = propertyService.getById(id);
         return ResponseEntity.ok(response);
     }
@@ -44,7 +49,7 @@ public class PropertyController {
     // PUT /api/properties/{id} - Actualizar propiedad
     @PutMapping("/{id}")
     public ResponseEntity<PropertyResponse> updateProperty(
-            @PathVariable Long id,
+            @PathVariable UUID id,
             @Valid @RequestBody PropertyRequest request) {
         PropertyResponse response = propertyService.update(id, request);
         return ResponseEntity.ok(response);
@@ -52,7 +57,7 @@ public class PropertyController {
 
     // DELETE /api/properties/{id} - Eliminar propiedad
     @DeleteMapping("/{id}")
-    public ResponseEntity<Void> deleteProperty(@PathVariable Long id) {
+    public ResponseEntity<Void> deleteProperty(@PathVariable UUID id) {
         propertyService.delete(id);
         return ResponseEntity.noContent().build();
     }

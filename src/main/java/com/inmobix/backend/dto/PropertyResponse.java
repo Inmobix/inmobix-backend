@@ -12,7 +12,7 @@ import java.util.UUID;
 @NoArgsConstructor
 public class PropertyResponse {
 
-    private Long id;
+    private UUID id;
     private String title;
     private String description;
     private String address;
