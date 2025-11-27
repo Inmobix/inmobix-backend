@@ -1,0 +1,207 @@
+<section
+  class="min-h-screen flex items-center justify-center bg-gray-50 px-4 py-8"
+>
+  <div class="max-w-md w-full bg-white rounded-xl shadow-lg p-10 m-4">
+    <h2 class="text-3xl font-bold text-gray-900 text-center mb-6">
+      Crear Cuenta
+    </h2>
+
+    <form class="space-y-4" (ngSubmit)="onSubmit()">
+      <!-- Nombre -->
+      <div>
+        <label for="name" class="block text-gray-700 font-medium mb-2"
+          >Nombre completo</label
+        >
+        <input
+          type="text"
+          id="name"
+          [(ngModel)]="name"
+          name="name"
+          (blur)="validateName()"
+          placeholder="Tu nombre"
+          [disabled]="isLoading"
+          class="w-full px-4 py-3 border border-gray-300 rounded-lg focus:outline-none placeholder-gray-400 disabled:bg-gray-100"
+          [class.border-red-500]="nameError"
+        />
+        <p *ngIf="nameError" class="text-red-500 text-sm mt-1">
+          El nombre es obligatorio
+        </p>
+      </div>
+
+      <!-- Username -->
+      <div>
+        <label for="username" class="block text-gray-700 font-medium mb-2"
+          >Nombre de usuario</label
+        >
+        <input
+          type="text"
+          id="username"
+          [(ngModel)]="username"
+          name="username"
+          (blur)="validateUsername()"
+          placeholder="Tu usuario"
+          [disabled]="isLoading"
+          class="w-full px-4 py-3 border border-gray-300 rounded-lg focus:outline-none placeholder-gray-400 disabled:bg-gray-100"
+          [class.border-red-500]="usernameError"
+        />
+        <p *ngIf="usernameError" class="text-red-500 text-sm mt-1">
+          El usuario es obligatorio
+        </p>
+      </div>
+
+      <!-- Email -->
+      <div>
+        <label for="email" class="block text-gray-700 font-medium mb-2"
+          >Correo electrónico</label
+        >
+        <input
+          type="email"
+          id="email"
+          [(ngModel)]="email"
+          name="email"
+          (blur)="validateEmail()"
+          placeholder="Ingresa tu email"
+          [disabled]="isLoading"
+          class="w-full px-4 py-3 border border-gray-300 rounded-lg focus:outline-none placeholder-gray-400 disabled:bg-gray-100"
+          [class.border-red-500]="emailError"
+        />
+        <p *ngIf="emailError" class="text-red-500 text-sm mt-1">
+          Correo obligatorio
+        </p>
+      </div>
+
+      <!-- Agregando campo documento obligatorio -->
+      <div>
+        <label for="documento" class="block text-gray-700 font-medium mb-2"
+          >Documento de identidad</label
+        >
+        <input
+          type="text"
+          id="documento"
+          [(ngModel)]="documento"
+          name="documento"
+          (blur)="validateDocumento()"
+          placeholder="Tu documento"
+          [disabled]="isLoading"
+          class="w-full px-4 py-3 border border-gray-300 rounded-lg focus:outline-none placeholder-gray-400 disabled:bg-gray-100"
+          [class.border-red-500]="documentoError"
+        />
+        <p *ngIf="documentoError" class="text-red-500 text-sm mt-1">
+          El documento es obligatorio
+        </p>
+      </div>
+
+      <!-- Contraseña -->
+      <div>
+        <label for="password" class="block text-gray-700 font-medium mb-2"
+          >Contraseña</label
+        >
+        <input
+          type="password"
+          id="password"
+          [(ngModel)]="password"
+          name="password"
+          (blur)="validatePassword()"
+          placeholder="Ingresa tu contraseña"
+          [disabled]="isLoading"
+          class="w-full px-4 py-3 border border-gray-300 rounded-lg focus:outline-none placeholder-gray-400 disabled:bg-gray-100"
+          [class.border-red-500]="passwordError"
+        />
+        <p *ngIf="passwordError" class="text-red-500 text-sm mt-1">
+          La contraseña es obligatoria
+        </p>
+      </div>
+
+      <!-- Confirmar Contraseña -->
+      <div>
+        <label
+          for="confirmPassword"
+          class="block text-gray-700 font-medium mb-2"
+          >Confirmar Contraseña</label
+        >
+        <input
+          type="password"
+          id="confirmPassword"
+          [(ngModel)]="confirmPassword"
+          name="confirmPassword"
+          (blur)="validateConfirmPassword()"
+          placeholder="Repite tu contraseña"
+          [disabled]="isLoading"
+          class="w-full px-4 py-3 border border-gray-300 rounded-lg focus:outline-none placeholder-gray-400 disabled:bg-gray-100"
+          [class.border-red-500]="
+            confirmPasswordError || confirmPasswordMismatch
+          "
+        />
+        <p *ngIf="confirmPasswordError" class="text-red-500 text-sm mt-1">
+          Confirma tu contraseña
+        </p>
+        <p *ngIf="confirmPasswordMismatch" class="text-red-500 text-sm mt-1">
+          Las contraseñas no coinciden
+        </p>
+      </div>
+
+      <!-- Opcionales: teléfono y fecha de nacimiento -->
+      <div>
+        <label for="telefono" class="block text-gray-700 font-medium mb-2"
+          >Teléfono (opcional)</label
+        >
+        <input
+          type="tel"
+          id="telefono"
+          [(ngModel)]="telefono"
+          name="telefono"
+          placeholder="Opcional"
+          [disabled]="isLoading"
+          class="w-full px-4 py-3 border border-gray-300 rounded-lg focus:outline-none placeholder-gray-400 disabled:bg-gray-100"
+        />
+      </div>
+
+      <div>
+        <label
+          for="fechaNacimiento"
+          class="block text-gray-700 font-medium mb-2"
+          >Fecha de nacimiento (opcional)</label
+        >
+        <input
+          type="date"
+          id="fechaNacimiento"
+          [(ngModel)]="fechaNacimiento"
+          name="fechaNacimiento"
+          [disabled]="isLoading"
+          class="w-full px-4 py-3 border border-gray-300 rounded-lg focus:outline-none disabled:bg-gray-100"
+        />
+      </div>
+
+      <!-- Registrarse -->
+      <button
+        type="submit"
+        [disabled]="isLoading"
+        class="w-full bg-blue-600 hover:bg-blue-700 text-white px-4 py-3 rounded-lg font-semibold transition-colors cursor-pointer disabled:bg-blue-300 disabled:cursor-not-allowed flex items-center justify-center"
+      >
+        <span *ngIf="!isLoading">Registrarse</span>
+        <span *ngIf="isLoading" class="flex items-center">
+          <iconify-icon icon="svg-spinners:180-ring" width="24" height="24" />
+          Registrando...
+        </span>
+      </button>
+    </form>
+
+    <!-- Inicia sesión -->
+    <p class="text-center text-gray-600 mt-6">
+      ¿Ya tienes cuenta?
+      <a [routerLink]="['/login']" class="text-blue-600 hover:text-blue-800"
+        >Inicia sesión</a
+      >
+    </p>
+
+    <!-- Ir al inicio -->
+    <p class="text-center text-gray-500 mt-4">
+      <a
+        [routerLink]="['/']"
+        fragment="inicio"
+        class="text-blue-600 hover:text-blue-800"
+        >Ir al inicio</a
+      >
+    </p>
+  </div>
+</section>
