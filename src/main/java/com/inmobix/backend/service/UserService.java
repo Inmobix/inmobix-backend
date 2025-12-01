@@ -486,68 +486,65 @@ public class UserService {
         emailService.sendHtmlEmail(user.getEmail(), "✅ Contraseña actualizada - Inmobix", html);
     }
 
-    private void sendEditConfirmationEmail(User user) {
-        String confirmUrl = frontendUrl + "/confirm-edit?token=" + user.getEditToken();
+    void sendEditConfirmationEmail(User user) {
+        String TOKEN = user.getEditToken();
 
-        String html = String
-                .format("""
-                        <!DOCTYPE html>
-                        <html>
-                        <head>
-                            <meta charset="UTF-8">
-                            <meta name="viewport" content="width=device-width, initial-scale=1.0">
-                        </head>
-                        <body style="font-family: Arial, sans-serif; line-height: 1.6; color: #333; margin: 0; padding: 0;">
-                            <div style="max-width: 600px; margin: 0 auto; padding: 20px; border: 1px solid #ddd; border-radius: 10px;">
-                                <h2 style="color: #F39C12;">Confirmar edición de cuenta</h2>
-                                <p>Hola %s,</p>
-                                <p>Has solicitado editar tu información. Para confirmar los cambios, haz clic en el botón:</p>
-                                <div style="text-align: center; margin: 30px 0;">
-                                    <a href="%s" style="background:#F39C12; color:white; padding:12px 30px; text-decoration:none; border-radius:6px; display:inline-block; font-weight: bold;">
-                                        Confirmar cambios
-                                    </a>
-                                </div>
-                                <p style="color: #666; font-size: 14px;">Este enlace expira en 15 minutos.</p>
-                                <p style="color: #666; font-size: 14px;">Si no solicitaste editar tu cuenta, ignora este correo.</p>
-                            </div>
-                        </body>
-                        </html>
-                        """,
-                        user.getName(), confirmUrl)
-                .stripIndent().trim();
+        String html = String.format("""
+        <!DOCTYPE html>
+        <html>
+        <head>
+            <meta charset="UTF-8">
+            <meta name="viewport" content="width=device-width, initial-scale=1.0">
+        </head>
+        <body style="font-family: Arial, sans-serif; line-height: 1.6; color: #333; margin: 0; padding: 0;">
+            <div style="max-width: 600px; margin: 0 auto; padding: 20px; border: 1px solid #ddd; border-radius: 10px;">
+                <h2 style="color: #F39C12;">Confirmar edición de cuenta</h2>
+                <p>Hola %s,</p>
+                <p>Has solicitado editar tu información. Copia y pega este token:</p>
+                <div style="text-align: center; margin: 30px 0;">
+                    <div style="background:#f5f5f5; border:2px dashed #F39C12; padding:15px; border-radius:6px; display:inline-block;">
+                        <code style="font-size:20px; font-weight:bold; color:#F39C12; letter-spacing:2px; user-select:all;">%s</code>
+                    </div>
+                </div>
+                <p style="color: #666; font-size: 14px;">Este token expira en 15 minutos.</p>
+                <p style="color: #666; font-size: 14px;">Si no solicitaste editar tu cuenta, ignora este correo.</p>
+            </div>
+        </body>
+        </html>
+        """, user.getName(), TOKEN).stripIndent().trim();
 
         emailService.sendHtmlEmail(user.getEmail(), "Confirmar edición - Inmobix", html);
     }
 
     private void sendDeleteConfirmationEmail(User user) {
-        String confirmUrl = backendUrl + "/api/user/confirm-delete?token=" + user.getDeleteToken();
+        String TOKEN = user.getDeleteToken();
 
         String html = String
                 .format("""
-                        <!DOCTYPE html>
-                        <html>
-                        <head>
-                            <meta charset="UTF-8">
-                            <meta name="viewport" content="width=device-width, initial-scale=1.0">
-                        </head>
-                        <body style="font-family: Arial, sans-serif; line-height: 1.6; color: #333; margin: 0; padding: 0;">
-                            <div style="max-width: 600px; margin: 0 auto; padding: 20px; border: 1px solid #ddd; border-radius: 10px;">
-                                <h2 style="color: #C0392B;">⚠️ Confirmar eliminación de cuenta</h2>
-                                <p>Hola %s,</p>
-                                <p>Has solicitado eliminar tu cuenta de Inmobix. Esta acción es <strong>irreversible</strong>.</p>
-                                <p>Si estás seguro, haz clic en el botón:</p>
-                                <div style="text-align: center; margin: 30px 0;">
-                                    <a href="%s" style="background:#C0392B; color:white; padding:12px 30px; text-decoration:none; border-radius:6px; display:inline-block; font-weight: bold;">
-                                        Eliminar mi cuenta
-                                    </a>
+                    <!DOCTYPE html>
+                    <html>
+                    <head>
+                        <meta charset="UTF-8">
+                        <meta name="viewport" content="width=device-width, initial-scale=1.0">
+                    </head>
+                    <body style="font-family: Arial, sans-serif; line-height: 1.6; color: #333; margin: 0; padding: 0;">
+                        <div style="max-width: 600px; margin: 0 auto; padding: 20px; border: 1px solid #ddd; border-radius: 10px;">
+                            <h2 style="color: #C0392B;">⚠️ Confirmar eliminación de cuenta</h2>
+                            <p>Hola %s,</p>
+                            <p>Has solicitado eliminar tu cuenta de Inmobix. Esta acción es <strong>irreversible</strong>.</p>
+                            <p>Si estás seguro, copia y pega este token:</p>
+                            <div style="text-align: center; margin: 30px 0;">
+                                <div style="background:#f5f5f5; border:2px dashed #C0392B; padding:15px; border-radius:6px; display:inline-block;">
+                                    <code style="font-size:20px; font-weight:bold; color:#C0392B; letter-spacing:2px; user-select:all;">%s</code>
                                 </div>
-                                <p style="color: #666; font-size: 14px;">Este enlace expira en 15 minutos.</p>
-                                <p style="color: #666; font-size: 14px;">Si no solicitaste eliminar tu cuenta, ignora este correo y cambia tu contraseña inmediatamente.</p>
                             </div>
-                        </body>
-                        </html>
-                        """,
-                        user.getName(), confirmUrl)
+                            <p style="color: #666; font-size: 14px;">Este token expira en 15 minutos.</p>
+                            <p style="color: #666; font-size: 14px;">Si no solicitaste eliminar tu cuenta, ignora este correo y cambia tu contraseña inmediatamente.</p>
+                        </div>
+                    </body>
+                    </html>
+                    """,
+                        user.getName(), TOKEN)
                 .stripIndent().trim();
 
         emailService.sendHtmlEmail(user.getEmail(), "⚠️ Confirmar eliminación - Inmobix", html);
