@@ -11,6 +11,11 @@ import org.springframework.web.bind.annotation.*;
 import java.util.List;
 import java.util.UUID;
 
+import org.springframework.http.HttpHeaders;
+import org.springframework.http.MediaType;
+import java.time.LocalDateTime;
+import java.time.format.DateTimeFormatter;
+
 @RestController
 @RequestMapping("/api")
 public class UserController {
@@ -118,5 +123,48 @@ public class UserController {
         userService.confirmDelete(token);
         return ResponseEntity
                 .ok(ApiResponse.success("Usuario eliminado exitosamente", null));
+    }
+
+    // Generar reporte PDF de usuarios (Solo ADMIN)
+    @GetMapping("/users/report/pdf")
+    public ResponseEntity<byte[]> generateUsersPdfReport(@RequestHeader("X-User-Role") Role requesterRole) {
+        if (requesterRole != Role.ADMIN) {
+            throw new com.inmobix.backend.exception.AuthenticationException(
+                    "Solo administradores pueden generar reportes");
+        }
+
+        byte[] pdfBytes = userService.generatePdfReport();
+
+        HttpHeaders headers = new HttpHeaders();
+        headers.setContentType(MediaType.APPLICATION_PDF);
+        headers.setContentDispositionFormData("attachment",
+                "reporte_usuarios_" + LocalDateTime.now().format(
+                        DateTimeFormatter.ofPattern("yyyyMMdd_HHmmss")) + ".pdf");
+
+        return ResponseEntity.ok()
+                .headers(headers)
+                .body(pdfBytes);
+    }
+
+    // Generar reporte Excel de usuarios (Solo ADMIN)
+    @GetMapping("/users/report/excel")
+    public ResponseEntity<byte[]> generateUsersExcelReport(@RequestHeader("X-User-Role") Role requesterRole) {
+        if (requesterRole != Role.ADMIN) {
+            throw new com.inmobix.backend.exception.AuthenticationException(
+                    "Solo administradores pueden generar reportes");
+        }
+
+        byte[] excelBytes = userService.generateExcelReport();
+
+        HttpHeaders headers = new HttpHeaders();
+        headers.setContentType(MediaType.parseMediaType(
+                "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"));
+        headers.setContentDispositionFormData("attachment",
+                "reporte_usuarios_" + LocalDateTime.now().format(
+                        DateTimeFormatter.ofPattern("yyyyMMdd_HHmmss")) + ".xlsx");
+
+        return ResponseEntity.ok()
+                .headers(headers)
+                .body(excelBytes);
     }
 }
