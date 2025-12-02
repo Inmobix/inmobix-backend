@@ -310,6 +310,8 @@ inmobix-backend/
 
 | Fecha      | Ticket | Cambio                                                                                                     | Autor             |
 |------------|--------|------------------------------------------------------------------------------------------------------------|-------------------|
+| 02/12/2025 | INB-62 | Desplegar nuevo ajuste                                                                                     | Andrés Gómez      |
+| 02/12/2025 | INB-61 | Implementación básica de Swagger                                                                           | Andrés Gómez      |
 | 02/12/2025 | INB-60 | Desplegar nuevos ajustes de reportes para el módulo de usuarios                                            | Andrés Gómez      |
 | 02/12/2025 | INB-59 | Documentar endpoints de reportes en README                                                                 | Andrés Gómez      |
 | 02/12/2025 | INB-58 | Agregar métodos de reportes individuales con propiedades en UserService                                    | Andrés Gómez      |
@@ -392,6 +394,7 @@ inmobix-backend/
 - **Docker** (Dockerfile para despliegue)
 - **Apache POI 5.2.5** (Generación de Excel)
 - **iText 7.2.5** (Generación de PDF)
+- **Swagger**
 ---
 
 ## 🚀 Cómo Ejecutar el Proyecto
