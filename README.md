@@ -31,6 +31,28 @@ La entidad `User` representa un usuario de la plataforma con sistema de verifica
 | deleteToken            | String        | Token para confirmar eliminación de cuenta   | Temporal                       |
 | deleteTokenExpiry      | LocalDateTime | Fecha de expiración del token de eliminación | Temporal                       |
 
+#### Reportes de Usuarios
+
+| Método   | Ruta                        | Descripción                                      | Requiere Auth |
+|----------|-----------------------------|--------------------------------------------------|---------------|
+| **GET**  | `/users/report/pdf`         | Genera reporte PDF de todos los usuarios         | Sí (ADMIN)    |
+| **GET**  | `/users/report/excel`       | Genera reporte Excel de todos los usuarios       | Sí (ADMIN)    |
+| **GET**  | `/user/{userId}/report/pdf` | Genera reporte PDF de un usuario con propiedades | Sí (Owner/ADMIN) |
+| **GET**  | `/user/{userId}/report/excel` | Genera reporte Excel de un usuario con propiedades | Sí (Owner/ADMIN) |
+
+**Validación de permisos:**
+- Reportes de todos los usuarios: Solo ADMIN
+- Reporte individual: El mismo usuario o ADMIN
+
+**Headers requeridos:**
+- `X-User-Id`: UUID del usuario que hace la petición (solo para reportes individuales)
+- `X-User-Role`: Rol del usuario (USER o ADMIN)
+
+**Contenido de reportes:**
+- **Reporte de todos los usuarios**: Listado con nombre, email, username, documento, teléfono y rol
+- **Reporte individual**: Datos del usuario + lista de nombres de propiedades asociadas
+
+
 ### Property
 
 La entidad `Property` representa una propiedad inmobiliaria en el sistema.
@@ -288,6 +310,18 @@ inmobix-backend/
 
 | Fecha      | Ticket | Cambio                                                                                                     | Autor             |
 |------------|--------|------------------------------------------------------------------------------------------------------------|-------------------|
+| 02/12/2025 | INB-60 | Desplegar nuevos ajustes de reportes para el módulo de usuarios                                            | Andrés Gómez      |
+| 02/12/2025 | INB-59 | Documentar endpoints de reportes en README                                                                 | Andrés Gómez      |
+| 02/12/2025 | INB-58 | Agregar métodos de reportes individuales con propiedades en UserService                                    | Andrés Gómez      |
+| 02/12/2025 | INB-57 | Agregar endpoints de reportes individuales en UserController                                               | Andrés Gómez      |
+| 02/12/2025 | INB-56 | Agregar endpoints de reportes PDF y Excel en UserController                                                | Andrés Gómez      |
+| 02/12/2025 | INB-55 | Agregar métodos de generación de reportes PDF y Excel en UserService                                       | Andrés Gómez      |
+| 02/12/2025 | INB-54 | Agregar dependencias Apache POI e iText para generación de reportes                                        | Andrés Gómez      |
+| 01/12/2025 | INB-53 | Desplegar API en Railway                                                                                   | Andrés Gómez      |
+| 01/12/2025 | INB-52 | Se ajusta el envío de tokens en el correo                                                                  | Andrés Gómez      |
+| 01/12/2025 | INB-51 | Se eliminan archivos innecesarios                                                                          | Andrés Gómez      |
+| 27/11/2025 | INB-50 | Corrección de errores                                                                                      | Jordy Prada Yanes |
+| 13/11/2025 | INB-49 | Se actualiza el README                                                                                     | Andrés Gómez      |
 | 13/11/2025 | INB-48 | Cambiar servicio de correo a Postmark                                                                      | Andrés Gómez      |
 | 12/11/2025 | INB-47 | Desplegar ajustes                                                                                          | Andrés Gómez      |
 | 12/11/2025 | INB-46 | Se configuró CORS dinámico con soporte para múltiples orígenes                                             | Andrés Gómez      |
@@ -356,7 +390,8 @@ inmobix-backend/
 - **BCrypt** (Spring Security Crypto)
 - **Maven**
 - **Docker** (Dockerfile para despliegue)
-
+- **Apache POI 5.2.5** (Generación de Excel)
+- **iText 7.2.5** (Generación de PDF)
 ---
 
 ## 🚀 Cómo Ejecutar el Proyecto
