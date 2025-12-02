@@ -3,6 +3,7 @@ package com.inmobix.backend.controller;
 import com.inmobix.backend.dto.*;
 import com.inmobix.backend.model.Role;
 import com.inmobix.backend.service.UserService;
+import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.validation.Valid;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
@@ -18,6 +19,7 @@ import java.time.format.DateTimeFormatter;
 
 @RestController
 @RequestMapping("/api")
+@Tag(name = "Usuarios", description = "Gestión de usuarios")
 public class UserController {
 
     private final UserService userService;
