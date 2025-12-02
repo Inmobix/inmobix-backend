@@ -7,6 +7,7 @@ import com.inmobix.backend.exception.DuplicateResourceException;
 import com.inmobix.backend.exception.ResourceNotFoundException;
 import com.inmobix.backend.model.Role;
 import com.inmobix.backend.model.User;
+import com.inmobix.backend.repository.PropertyRepository;
 import com.inmobix.backend.repository.UserRepository;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.security.crypto.password.PasswordEncoder;
@@ -41,6 +42,7 @@ public class UserService {
     private final UserRepository repository;
     private final PasswordEncoder passwordEncoder;
     private final EmailService emailService;
+    private final PropertyRepository propertyRepository;
 
     @Value("${app.url.backend}")
     private String backendUrl;
@@ -48,10 +50,11 @@ public class UserService {
     @Value("${app.url.frontend}")
     private String frontendUrl;
 
-    public UserService(UserRepository repository, PasswordEncoder passwordEncoder, EmailService emailService) {
+    public UserService(UserRepository repository, PasswordEncoder passwordEncoder, EmailService emailService, PropertyRepository propertyRepository, PropertyRepository propertyRepository1) {
         this.repository = repository;
         this.passwordEncoder = passwordEncoder;
         this.emailService = emailService;
+        this.propertyRepository = propertyRepository1;
     }
 
     @Transactional
@@ -801,11 +804,276 @@ public class UserService {
         }
     }
 
+    // ==================== REPORTE PDF INDIVIDUAL CON PROPIEDADES ====================
+
+    @Transactional(readOnly = true)
     public byte[] generateUserPdfReport(UUID userId) {
-        return null;
+        User user = repository.findById(userId)
+                .orElseThrow(() -> new ResourceNotFoundException("Usuario no encontrado con id " + userId));
+
+        List<com.inmobix.backend.model.Property> properties = propertyRepository.findByUserId(userId);
+
+        try (ByteArrayOutputStream baos = new ByteArrayOutputStream()) {
+            PdfWriter writer = new PdfWriter(baos);
+            PdfDocument pdf = new PdfDocument(writer);
+            Document document = new Document(pdf);
+
+            // Título
+            Paragraph title = new Paragraph("Reporte de Usuario - Inmobix")
+                    .setFontSize(24)
+                    .setBold()
+                    .setFontColor(new DeviceRgb(46, 134, 193))
+                    .setTextAlignment(TextAlignment.CENTER);
+            document.add(title);
+
+            // Fecha
+            String dateStr = LocalDateTime.now().format(
+                    DateTimeFormatter.ofPattern("dd/MM/yyyy HH:mm:ss"));
+            Paragraph date = new Paragraph("Generado el: " + dateStr)
+                    .setFontSize(10)
+                    .setItalic()
+                    .setTextAlignment(TextAlignment.CENTER)
+                    .setMarginBottom(30);
+            document.add(date);
+
+            // Sección: Datos del Usuario
+            Paragraph sectionTitle = new Paragraph("Datos del Usuario")
+                    .setFontSize(16)
+                    .setBold()
+                    .setFontColor(new DeviceRgb(46, 134, 193))
+                    .setMarginBottom(10);
+            document.add(sectionTitle);
+
+            // Tabla de datos del usuario
+            float[] userWidths = {2, 4};
+            com.itextpdf.layout.element.Table userTable = new com.itextpdf.layout.element.Table(
+                    UnitValue.createPercentArray(userWidths)).useAllAvailableWidth();
+
+            userTable.addCell(new com.itextpdf.layout.element.Cell()
+                    .add(new Paragraph("Nombre:").setBold()));
+            userTable.addCell(new com.itextpdf.layout.element.Cell()
+                    .add(new Paragraph(user.getName())));
+
+            userTable.addCell(new com.itextpdf.layout.element.Cell()
+                    .add(new Paragraph("Email:").setBold()));
+            userTable.addCell(new com.itextpdf.layout.element.Cell()
+                    .add(new Paragraph(user.getEmail())));
+
+            userTable.addCell(new com.itextpdf.layout.element.Cell()
+                    .add(new Paragraph("Username:").setBold()));
+            userTable.addCell(new com.itextpdf.layout.element.Cell()
+                    .add(new Paragraph(user.getUsername())));
+
+            userTable.addCell(new com.itextpdf.layout.element.Cell()
+                    .add(new Paragraph("Documento:").setBold()));
+            userTable.addCell(new com.itextpdf.layout.element.Cell()
+                    .add(new Paragraph(user.getDocumento() != null ? user.getDocumento() : "N/A")));
+
+            userTable.addCell(new com.itextpdf.layout.element.Cell()
+                    .add(new Paragraph("Teléfono:").setBold()));
+            userTable.addCell(new com.itextpdf.layout.element.Cell()
+                    .add(new Paragraph(user.getPhone() != null ? user.getPhone() : "N/A")));
+
+            userTable.addCell(new com.itextpdf.layout.element.Cell()
+                    .add(new Paragraph("Rol:").setBold()));
+            userTable.addCell(new com.itextpdf.layout.element.Cell()
+                    .add(new Paragraph(user.getRole().name())));
+
+            document.add(userTable);
+
+            // Sección: Propiedades
+            Paragraph propSection = new Paragraph("Propiedades Asociadas")
+                    .setFontSize(16)
+                    .setBold()
+                    .setFontColor(new DeviceRgb(46, 134, 193))
+                    .setMarginTop(30)
+                    .setMarginBottom(10);
+            document.add(propSection);
+
+            Paragraph propCount = new Paragraph("Total: " + properties.size() + " propiedades")
+                    .setFontSize(11)
+                    .setItalic()
+                    .setMarginBottom(10);
+            document.add(propCount);
+
+            if (properties.isEmpty()) {
+                Paragraph noProp = new Paragraph("No hay propiedades registradas.")
+                        .setFontSize(11)
+                        .setItalic();
+                document.add(noProp);
+            } else {
+                if (properties.isEmpty()) {
+                    Paragraph noProp = new Paragraph("No hay propiedades registradas.")
+                            .setFontSize(11)
+                            .setItalic();
+                    document.add(noProp);
+                } else {
+                    // Lista de propiedades
+                    for (com.inmobix.backend.model.Property prop : properties) {
+                        Paragraph propItem = new Paragraph("• " + prop.getTitle())
+                                .setFontSize(11)
+                                .setMarginLeft(20);
+                        document.add(propItem);
+                    }
+                }
+            }
+
+            // Footer
+            Paragraph footer = new Paragraph("Inmobix - Sistema de Gestión Inmobiliaria")
+                    .setFontSize(8)
+                    .setItalic()
+                    .setTextAlignment(TextAlignment.CENTER)
+                    .setMarginTop(30);
+            document.add(footer);
+
+            document.close();
+            return baos.toByteArray();
+
+        } catch (Exception e) {
+            throw new RuntimeException("Error al generar reporte PDF: " + e.getMessage(), e);
+        }
     }
 
+    // ==================== REPORTE EXCEL INDIVIDUAL CON PROPIEDADES ====================
+
+    @Transactional(readOnly = true)
     public byte[] generateUserExcelReport(UUID userId) {
-        return null;
+        User user = repository.findById(userId)
+                .orElseThrow(() -> new ResourceNotFoundException("Usuario no encontrado con id " + userId));
+
+        List<com.inmobix.backend.model.Property> properties = propertyRepository.findByUserId(userId);
+
+        try (XSSFWorkbook workbook = new XSSFWorkbook();
+             ByteArrayOutputStream baos = new ByteArrayOutputStream()) {
+
+            Sheet sheet = workbook.createSheet("Usuario");
+
+            // Estilos
+            CellStyle titleStyle = workbook.createCellStyle();
+            Font titleFont = workbook.createFont();
+            titleFont.setBold(true);
+            titleFont.setFontHeightInPoints((short) 16);
+            titleFont.setColor(IndexedColors.WHITE.getIndex());
+            titleStyle.setFont(titleFont);
+            titleStyle.setFillForegroundColor(IndexedColors.DARK_BLUE.getIndex());
+            titleStyle.setFillPattern(FillPatternType.SOLID_FOREGROUND);
+            titleStyle.setAlignment(HorizontalAlignment.CENTER);
+
+            CellStyle sectionStyle = workbook.createCellStyle();
+            Font sectionFont = workbook.createFont();
+            sectionFont.setBold(true);
+            sectionFont.setFontHeightInPoints((short) 12);
+            sectionStyle.setFont(sectionFont);
+            sectionStyle.setFillForegroundColor(IndexedColors.LIGHT_BLUE.getIndex());
+            sectionStyle.setFillPattern(FillPatternType.SOLID_FOREGROUND);
+
+            CellStyle labelStyle = workbook.createCellStyle();
+            Font labelFont = workbook.createFont();
+            labelFont.setBold(true);
+            labelStyle.setFont(labelFont);
+
+            CellStyle dataStyle = workbook.createCellStyle();
+
+            // Título
+            Row titleRow = sheet.createRow(0);
+            titleRow.setHeight((short) 600);
+            org.apache.poi.ss.usermodel.Cell titleCell = titleRow.createCell(0);
+            titleCell.setCellValue("Reporte de Usuario - Inmobix");
+            titleCell.setCellStyle(titleStyle);
+            sheet.addMergedRegion(new CellRangeAddress(0, 0, 0, 1));
+
+            // Fecha
+            Row dateRow = sheet.createRow(1);
+            org.apache.poi.ss.usermodel.Cell dateCell = dateRow.createCell(0);
+            dateCell.setCellValue("Generado el: " + LocalDateTime.now().format(
+                    DateTimeFormatter.ofPattern("dd/MM/yyyy HH:mm:ss")));
+            sheet.addMergedRegion(new CellRangeAddress(1, 1, 0, 1));
+
+            // Sección: Datos del Usuario
+            Row sectionRow = sheet.createRow(3);
+            org.apache.poi.ss.usermodel.Cell sectionCell = sectionRow.createCell(0);
+            sectionCell.setCellValue("Datos del Usuario");
+            sectionCell.setCellStyle(sectionStyle);
+            sheet.addMergedRegion(new CellRangeAddress(3, 3, 0, 1));
+
+            // Datos del usuario
+            int rowNum = 4;
+
+            Row nameRow = sheet.createRow(rowNum++);
+            nameRow.createCell(0).setCellValue("Nombre:");
+            nameRow.getCell(0).setCellStyle(labelStyle);
+            nameRow.createCell(1).setCellValue(user.getName());
+            nameRow.getCell(1).setCellStyle(dataStyle);
+
+            Row emailRow = sheet.createRow(rowNum++);
+            emailRow.createCell(0).setCellValue("Email:");
+            emailRow.getCell(0).setCellStyle(labelStyle);
+            emailRow.createCell(1).setCellValue(user.getEmail());
+            emailRow.getCell(1).setCellStyle(dataStyle);
+
+            Row userRow = sheet.createRow(rowNum++);
+            userRow.createCell(0).setCellValue("Username:");
+            userRow.getCell(0).setCellStyle(labelStyle);
+            userRow.createCell(1).setCellValue(user.getUsername());
+            userRow.getCell(1).setCellStyle(dataStyle);
+
+            Row docRow = sheet.createRow(rowNum++);
+            docRow.createCell(0).setCellValue("Documento:");
+            docRow.getCell(0).setCellStyle(labelStyle);
+            docRow.createCell(1).setCellValue(user.getDocumento() != null ? user.getDocumento() : "N/A");
+            docRow.getCell(1).setCellStyle(dataStyle);
+
+            Row phoneRow = sheet.createRow(rowNum++);
+            phoneRow.createCell(0).setCellValue("Teléfono:");
+            phoneRow.getCell(0).setCellStyle(labelStyle);
+            phoneRow.createCell(1).setCellValue(user.getPhone() != null ? user.getPhone() : "N/A");
+            phoneRow.getCell(1).setCellStyle(dataStyle);
+
+            Row roleRow = sheet.createRow(rowNum++);
+            roleRow.createCell(0).setCellValue("Rol:");
+            roleRow.getCell(0).setCellStyle(labelStyle);
+            roleRow.createCell(1).setCellValue(user.getRole().name());
+            roleRow.getCell(1).setCellStyle(dataStyle);
+
+            // Sección: Propiedades
+            rowNum += 2;
+            Row propSectionRow = sheet.createRow(rowNum++);
+            org.apache.poi.ss.usermodel.Cell propSectionCell = propSectionRow.createCell(0);
+            propSectionCell.setCellValue("Propiedades Asociadas");
+            propSectionCell.setCellStyle(sectionStyle);
+            sheet.addMergedRegion(new CellRangeAddress(rowNum - 1, rowNum - 1, 0, 1));
+
+            Row countRow = sheet.createRow(rowNum++);
+            countRow.createCell(0).setCellValue("Total: " + properties.size() + " propiedades");
+            sheet.addMergedRegion(new CellRangeAddress(rowNum - 1, rowNum - 1, 0, 1));
+
+            if (properties.isEmpty()) {
+                Row noPropRow = sheet.createRow(rowNum++);
+                org.apache.poi.ss.usermodel.Cell noPropCell = noPropRow.createCell(0);
+                noPropCell.setCellValue("No hay propiedades registradas.");
+                CellStyle italicStyle = workbook.createCellStyle();
+                Font italicFont = workbook.createFont();
+                italicFont.setItalic(true);
+                italicStyle.setFont(italicFont);
+                noPropCell.setCellStyle(italicStyle);
+            } else {
+                rowNum++;
+                for (com.inmobix.backend.model.Property prop : properties) {
+                    Row propRow = sheet.createRow(rowNum++);
+                    propRow.createCell(0).setCellValue("• " + prop.getTitle());
+                    sheet.addMergedRegion(new CellRangeAddress(rowNum - 1, rowNum - 1, 0, 1));
+                }
+            }
+
+            // Ajustar anchos
+            sheet.setColumnWidth(0, 5000);
+            sheet.setColumnWidth(1, 10000);
+
+            workbook.write(baos);
+            return baos.toByteArray();
+
+        } catch (Exception e) {
+            throw new RuntimeException("Error al generar reporte Excel: " + e.getMessage(), e);
+        }
     }
 }
