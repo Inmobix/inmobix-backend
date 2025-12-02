@@ -17,6 +17,24 @@ import java.time.LocalDateTime;
 import java.util.*;
 import java.util.stream.Collectors;
 
+// iText para PDF
+import com.itextpdf.kernel.colors.ColorConstants;
+import com.itextpdf.kernel.colors.DeviceRgb;
+import com.itextpdf.kernel.pdf.PdfDocument;
+import com.itextpdf.kernel.pdf.PdfWriter;
+import com.itextpdf.layout.Document;
+import com.itextpdf.layout.element.Paragraph;
+import com.itextpdf.layout.properties.TextAlignment;
+import com.itextpdf.layout.properties.UnitValue;
+
+// Apache POI para Excel
+import org.apache.poi.ss.usermodel.*;
+import org.apache.poi.ss.util.CellRangeAddress;
+import org.apache.poi.xssf.usermodel.XSSFWorkbook;
+
+import java.io.ByteArrayOutputStream;
+import java.time.format.DateTimeFormatter;
+
 @Service
 public class UserService {
 
@@ -569,5 +587,217 @@ public class UserService {
         UserResponse response = mapToResponse(user);
         response.setVerificationToken(user.getVerificationToken());
         return response;
+    }
+
+    @Transactional(readOnly = true)
+    public byte[] generatePdfReport() {
+        List<User> users = repository.findAll();
+
+        try (ByteArrayOutputStream baos = new ByteArrayOutputStream()) {
+            PdfWriter writer = new PdfWriter(baos);
+            PdfDocument pdf = new PdfDocument(writer);
+            Document document = new Document(pdf);
+
+            // Título
+            Paragraph title = new Paragraph("Reporte de Usuarios - Inmobix")
+                    .setFontSize(24)
+                    .setBold()
+                    .setFontColor(new DeviceRgb(46, 134, 193))
+                    .setTextAlignment(TextAlignment.CENTER);
+            document.add(title);
+
+            // Fecha
+            String dateStr = LocalDateTime.now().format(
+                    DateTimeFormatter.ofPattern("dd/MM/yyyy HH:mm:ss"));
+            Paragraph date = new Paragraph("Generado el: " + dateStr)
+                    .setFontSize(10)
+                    .setItalic()
+                    .setTextAlignment(TextAlignment.CENTER)
+                    .setMarginBottom(20);
+            document.add(date);
+
+            // Resumen
+            Paragraph summary = new Paragraph("Total de usuarios registrados: " + users.size())
+                    .setFontSize(12)
+                    .setBold()
+                    .setMarginBottom(15);
+            document.add(summary);
+
+            // Tabla
+            float[] columnWidths = {3, 4, 2.5f, 2.5f, 1.5f};
+            com.itextpdf.layout.element.Table table = new com.itextpdf.layout.element.Table(
+                    UnitValue.createPercentArray(columnWidths)).useAllAvailableWidth();
+
+            // Encabezados
+            String[] headers = {"Nombre", "Email", "Documento", "Teléfono", "Rol"};
+            for (String header : headers) {
+                com.itextpdf.layout.element.Cell cell = new com.itextpdf.layout.element.Cell()
+                        .add(new Paragraph(header).setBold())
+                        .setBackgroundColor(new DeviceRgb(46, 134, 193))
+                        .setFontColor(ColorConstants.WHITE)
+                        .setTextAlignment(TextAlignment.CENTER);
+                table.addHeaderCell(cell);
+            }
+
+            // Datos
+            for (User user : users) {
+                table.addCell(new com.itextpdf.layout.element.Cell()
+                        .add(new Paragraph(user.getName())));
+                table.addCell(new com.itextpdf.layout.element.Cell()
+                        .add(new Paragraph(user.getEmail())));
+                table.addCell(new com.itextpdf.layout.element.Cell()
+                        .add(new Paragraph(user.getDocumento() != null ? user.getDocumento() : "N/A")));
+                table.addCell(new com.itextpdf.layout.element.Cell()
+                        .add(new Paragraph(user.getPhone() != null ? user.getPhone() : "N/A")));
+                table.addCell(new com.itextpdf.layout.element.Cell()
+                        .add(new Paragraph(user.getRole().name()))
+                        .setTextAlignment(TextAlignment.CENTER));
+            }
+
+            document.add(table);
+
+            // Footer
+            Paragraph footer = new Paragraph("Inmobix - Sistema de Gestión Inmobiliaria")
+                    .setFontSize(8)
+                    .setItalic()
+                    .setTextAlignment(TextAlignment.CENTER)
+                    .setMarginTop(20);
+            document.add(footer);
+
+            document.close();
+            return baos.toByteArray();
+
+        } catch (Exception e) {
+            throw new RuntimeException("Error al generar reporte PDF: " + e.getMessage(), e);
+        }
+    }
+
+    @Transactional(readOnly = true)
+    public byte[] generateExcelReport() {
+        List<User> users = repository.findAll();
+
+        try (XSSFWorkbook workbook = new XSSFWorkbook();
+             ByteArrayOutputStream baos = new ByteArrayOutputStream()) {
+
+            Sheet sheet = workbook.createSheet("Usuarios");
+
+            // Estilos
+            CellStyle titleStyle = workbook.createCellStyle();
+            Font titleFont = workbook.createFont();
+            titleFont.setBold(true);
+            titleFont.setFontHeightInPoints((short) 16);
+            titleFont.setColor(IndexedColors.WHITE.getIndex());
+            titleStyle.setFont(titleFont);
+            titleStyle.setFillForegroundColor(IndexedColors.DARK_BLUE.getIndex());
+            titleStyle.setFillPattern(FillPatternType.SOLID_FOREGROUND);
+            titleStyle.setAlignment(HorizontalAlignment.CENTER);
+            titleStyle.setVerticalAlignment(VerticalAlignment.CENTER);
+
+            CellStyle headerStyle = workbook.createCellStyle();
+            Font headerFont = workbook.createFont();
+            headerFont.setBold(true);
+            headerStyle.setFont(headerFont);
+            headerStyle.setFillForegroundColor(IndexedColors.LIGHT_BLUE.getIndex());
+            headerStyle.setFillPattern(FillPatternType.SOLID_FOREGROUND);
+            headerStyle.setAlignment(HorizontalAlignment.CENTER);
+            headerStyle.setBorderBottom(BorderStyle.THIN);
+            headerStyle.setBorderTop(BorderStyle.THIN);
+            headerStyle.setBorderLeft(BorderStyle.THIN);
+            headerStyle.setBorderRight(BorderStyle.THIN);
+
+            CellStyle dataStyle = workbook.createCellStyle();
+            dataStyle.setBorderBottom(BorderStyle.THIN);
+            dataStyle.setBorderTop(BorderStyle.THIN);
+            dataStyle.setBorderLeft(BorderStyle.THIN);
+            dataStyle.setBorderRight(BorderStyle.THIN);
+
+            CellStyle alternateStyle = workbook.createCellStyle();
+            alternateStyle.cloneStyleFrom(dataStyle);
+            alternateStyle.setFillForegroundColor(IndexedColors.GREY_25_PERCENT.getIndex());
+            alternateStyle.setFillPattern(FillPatternType.SOLID_FOREGROUND);
+
+            // Título
+            Row titleRow = sheet.createRow(0);
+            titleRow.setHeight((short) 600);
+            org.apache.poi.ss.usermodel.Cell titleCell = titleRow.createCell(0);
+            titleCell.setCellValue("Reporte de Usuarios - Inmobix");
+            titleCell.setCellStyle(titleStyle);
+            sheet.addMergedRegion(new CellRangeAddress(0, 0, 0, 5));
+
+            // Fecha
+            Row dateRow = sheet.createRow(1);
+            org.apache.poi.ss.usermodel.Cell dateCell = dateRow.createCell(0);
+            dateCell.setCellValue("Generado el: " + LocalDateTime.now().format(
+                    DateTimeFormatter.ofPattern("dd/MM/yyyy HH:mm:ss")));
+            sheet.addMergedRegion(new CellRangeAddress(1, 1, 0, 5));
+
+            // Resumen
+            Row summaryRow = sheet.createRow(2);
+            summaryRow.setHeight((short) 400);
+            org.apache.poi.ss.usermodel.Cell summaryCell = summaryRow.createCell(0);
+            summaryCell.setCellValue("Total de usuarios registrados: " + users.size());
+            CellStyle summaryStyle = workbook.createCellStyle();
+            Font summaryFont = workbook.createFont();
+            summaryFont.setBold(true);
+            summaryStyle.setFont(summaryFont);
+            summaryCell.setCellStyle(summaryStyle);
+            sheet.addMergedRegion(new CellRangeAddress(2, 2, 0, 5));
+
+            // Encabezados
+            Row headerRow = sheet.createRow(4);
+            String[] headers = {"Nombre", "Email", "Username", "Documento", "Teléfono", "Rol"};
+            for (int i = 0; i < headers.length; i++) {
+                org.apache.poi.ss.usermodel.Cell cell = headerRow.createCell(i);
+                cell.setCellValue(headers[i]);
+                cell.setCellStyle(headerStyle);
+            }
+
+            // Datos
+            int rowNum = 5;
+            for (User user : users) {
+                Row row = sheet.createRow(rowNum);
+                CellStyle style = (rowNum % 2 == 0) ? dataStyle : alternateStyle;
+
+                org.apache.poi.ss.usermodel.Cell cell0 = row.createCell(0);
+                cell0.setCellValue(user.getName());
+                cell0.setCellStyle(style);
+
+                org.apache.poi.ss.usermodel.Cell cell1 = row.createCell(1);
+                cell1.setCellValue(user.getEmail());
+                cell1.setCellStyle(style);
+
+                org.apache.poi.ss.usermodel.Cell cell2 = row.createCell(2);
+                cell2.setCellValue(user.getUsername());
+                cell2.setCellStyle(style);
+
+                org.apache.poi.ss.usermodel.Cell cell3 = row.createCell(3);
+                cell3.setCellValue(user.getDocumento() != null ? user.getDocumento() : "N/A");
+                cell3.setCellStyle(style);
+
+                org.apache.poi.ss.usermodel.Cell cell4 = row.createCell(4);
+                cell4.setCellValue(user.getPhone() != null ? user.getPhone() : "N/A");
+                cell4.setCellStyle(style);
+
+                org.apache.poi.ss.usermodel.Cell cell5 = row.createCell(5);
+                cell5.setCellValue(user.getRole().name());
+                cell5.setCellStyle(style);
+
+                rowNum++;
+            }
+
+            // Ajustar anchos
+            sheet.setColumnWidth(0, 6000);  // Nombre
+            sheet.setColumnWidth(1, 8000);  // Email
+            sheet.setColumnWidth(2, 5000);  // Username
+            sheet.setColumnWidth(3, 4500);  // Documento
+            sheet.setColumnWidth(4, 4500);  // Teléfono
+            sheet.setColumnWidth(5, 3000);  // Rol
+
+            workbook.write(baos);
+            return baos.toByteArray();
+
+        } catch (Exception e) {
+            throw new RuntimeException("Error al generar reporte Excel: " + e.getMessage(), e);
+        }
     }
 }
