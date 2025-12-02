@@ -800,4 +800,12 @@ public class UserService {
             throw new RuntimeException("Error al generar reporte Excel: " + e.getMessage(), e);
         }
     }
+
+    public byte[] generateUserPdfReport(UUID userId) {
+        return null;
+    }
+
+    public byte[] generateUserExcelReport(UUID userId) {
+        return null;
+    }
 }
