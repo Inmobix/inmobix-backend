@@ -50,7 +50,8 @@ public class UserService {
     @Value("${app.url.frontend}")
     private String frontendUrl;
 
-    public UserService(UserRepository repository, PasswordEncoder passwordEncoder, EmailService emailService, PropertyRepository propertyRepository, PropertyRepository propertyRepository1) {
+    public UserService(UserRepository repository, PasswordEncoder passwordEncoder, EmailService emailService,
+            PropertyRepository propertyRepository, PropertyRepository propertyRepository1) {
         this.repository = repository;
         this.passwordEncoder = passwordEncoder;
         this.emailService = emailService;
@@ -510,29 +511,32 @@ public class UserService {
     void sendEditConfirmationEmail(User user) {
         String TOKEN = user.getEditToken();
 
-        String html = String.format("""
-        <!DOCTYPE html>
-        <html>
-        <head>
-            <meta charset="UTF-8">
-            <meta name="viewport" content="width=device-width, initial-scale=1.0">
-        </head>
-        <body style="font-family: Arial, sans-serif; line-height: 1.6; color: #333; margin: 0; padding: 0;">
-            <div style="max-width: 600px; margin: 0 auto; padding: 20px; border: 1px solid #ddd; border-radius: 10px;">
-                <h2 style="color: #F39C12;">Confirmar edición de cuenta</h2>
-                <p>Hola %s,</p>
-                <p>Has solicitado editar tu información. Copia y pega este token:</p>
-                <div style="text-align: center; margin: 30px 0;">
-                    <div style="background:#f5f5f5; border:2px dashed #F39C12; padding:15px; border-radius:6px; display:inline-block;">
-                        <code style="font-size:20px; font-weight:bold; color:#F39C12; letter-spacing:2px; user-select:all;">%s</code>
-                    </div>
-                </div>
-                <p style="color: #666; font-size: 14px;">Este token expira en 15 minutos.</p>
-                <p style="color: #666; font-size: 14px;">Si no solicitaste editar tu cuenta, ignora este correo.</p>
-            </div>
-        </body>
-        </html>
-        """, user.getName(), TOKEN).stripIndent().trim();
+        String html = String
+                .format("""
+                        <!DOCTYPE html>
+                        <html>
+                        <head>
+                            <meta charset="UTF-8">
+                            <meta name="viewport" content="width=device-width, initial-scale=1.0">
+                        </head>
+                        <body style="font-family: Arial, sans-serif; line-height: 1.6; color: #333; margin: 0; padding: 0;">
+                            <div style="max-width: 600px; margin: 0 auto; padding: 20px; border: 1px solid #ddd; border-radius: 10px;">
+                                <h2 style="color: #F39C12;">Confirmar edición de cuenta</h2>
+                                <p>Hola %s,</p>
+                                <p>Has solicitado editar tu información. Copia y pega este token:</p>
+                                <div style="text-align: center; margin: 30px 0;">
+                                    <div style="background:#f5f5f5; border:2px dashed #F39C12; padding:15px; border-radius:6px; display:inline-block;">
+                                        <code style="font-size:20px; font-weight:bold; color:#F39C12; letter-spacing:2px; user-select:all;">%s</code>
+                                    </div>
+                                </div>
+                                <p style="color: #666; font-size: 14px;">Este token expira en 15 minutos.</p>
+                                <p style="color: #666; font-size: 14px;">Si no solicitaste editar tu cuenta, ignora este correo.</p>
+                            </div>
+                        </body>
+                        </html>
+                        """,
+                        user.getName(), TOKEN)
+                .stripIndent().trim();
 
         emailService.sendHtmlEmail(user.getEmail(), "Confirmar edición - Inmobix", html);
     }
@@ -542,29 +546,29 @@ public class UserService {
 
         String html = String
                 .format("""
-                    <!DOCTYPE html>
-                    <html>
-                    <head>
-                        <meta charset="UTF-8">
-                        <meta name="viewport" content="width=device-width, initial-scale=1.0">
-                    </head>
-                    <body style="font-family: Arial, sans-serif; line-height: 1.6; color: #333; margin: 0; padding: 0;">
-                        <div style="max-width: 600px; margin: 0 auto; padding: 20px; border: 1px solid #ddd; border-radius: 10px;">
-                            <h2 style="color: #C0392B;">⚠️ Confirmar eliminación de cuenta</h2>
-                            <p>Hola %s,</p>
-                            <p>Has solicitado eliminar tu cuenta de Inmobix. Esta acción es <strong>irreversible</strong>.</p>
-                            <p>Si estás seguro, copia y pega este token:</p>
-                            <div style="text-align: center; margin: 30px 0;">
-                                <div style="background:#f5f5f5; border:2px dashed #C0392B; padding:15px; border-radius:6px; display:inline-block;">
-                                    <code style="font-size:20px; font-weight:bold; color:#C0392B; letter-spacing:2px; user-select:all;">%s</code>
+                        <!DOCTYPE html>
+                        <html>
+                        <head>
+                            <meta charset="UTF-8">
+                            <meta name="viewport" content="width=device-width, initial-scale=1.0">
+                        </head>
+                        <body style="font-family: Arial, sans-serif; line-height: 1.6; color: #333; margin: 0; padding: 0;">
+                            <div style="max-width: 600px; margin: 0 auto; padding: 20px; border: 1px solid #ddd; border-radius: 10px;">
+                                <h2 style="color: #C0392B;">⚠️ Confirmar eliminación de cuenta</h2>
+                                <p>Hola %s,</p>
+                                <p>Has solicitado eliminar tu cuenta de Inmobix. Esta acción es <strong>irreversible</strong>.</p>
+                                <p>Si estás seguro, copia y pega este token:</p>
+                                <div style="text-align: center; margin: 30px 0;">
+                                    <div style="background:#f5f5f5; border:2px dashed #C0392B; padding:15px; border-radius:6px; display:inline-block;">
+                                        <code style="font-size:20px; font-weight:bold; color:#C0392B; letter-spacing:2px; user-select:all;">%s</code>
+                                    </div>
                                 </div>
+                                <p style="color: #666; font-size: 14px;">Este token expira en 15 minutos.</p>
+                                <p style="color: #666; font-size: 14px;">Si no solicitaste eliminar tu cuenta, ignora este correo y cambia tu contraseña inmediatamente.</p>
                             </div>
-                            <p style="color: #666; font-size: 14px;">Este token expira en 15 minutos.</p>
-                            <p style="color: #666; font-size: 14px;">Si no solicitaste eliminar tu cuenta, ignora este correo y cambia tu contraseña inmediatamente.</p>
-                        </div>
-                    </body>
-                    </html>
-                    """,
+                        </body>
+                        </html>
+                        """,
                         user.getName(), TOKEN)
                 .stripIndent().trim();
 
@@ -627,12 +631,12 @@ public class UserService {
             document.add(summary);
 
             // Tabla
-            float[] columnWidths = {3, 4, 2.5f, 2.5f, 1.5f};
+            float[] columnWidths = { 3, 4, 2.5f, 2.5f, 1.5f };
             com.itextpdf.layout.element.Table table = new com.itextpdf.layout.element.Table(
                     UnitValue.createPercentArray(columnWidths)).useAllAvailableWidth();
 
             // Encabezados
-            String[] headers = {"Nombre", "Email", "Documento", "Teléfono", "Rol"};
+            String[] headers = { "Nombre", "Email", "Documento", "Teléfono", "Rol" };
             for (String header : headers) {
                 com.itextpdf.layout.element.Cell cell = new com.itextpdf.layout.element.Cell()
                         .add(new Paragraph(header).setBold())
@@ -680,7 +684,7 @@ public class UserService {
         List<User> users = repository.findAll();
 
         try (XSSFWorkbook workbook = new XSSFWorkbook();
-             ByteArrayOutputStream baos = new ByteArrayOutputStream()) {
+                ByteArrayOutputStream baos = new ByteArrayOutputStream()) {
 
             Sheet sheet = workbook.createSheet("Usuarios");
 
@@ -748,7 +752,7 @@ public class UserService {
 
             // Encabezados
             Row headerRow = sheet.createRow(4);
-            String[] headers = {"Nombre", "Email", "Username", "Documento", "Teléfono", "Rol"};
+            String[] headers = { "Nombre", "Email", "Username", "Documento", "Teléfono", "Rol" };
             for (int i = 0; i < headers.length; i++) {
                 org.apache.poi.ss.usermodel.Cell cell = headerRow.createCell(i);
                 cell.setCellValue(headers[i]);
@@ -789,12 +793,12 @@ public class UserService {
             }
 
             // Ajustar anchos
-            sheet.setColumnWidth(0, 6000);  // Nombre
-            sheet.setColumnWidth(1, 8000);  // Email
-            sheet.setColumnWidth(2, 5000);  // Username
-            sheet.setColumnWidth(3, 4500);  // Documento
-            sheet.setColumnWidth(4, 4500);  // Teléfono
-            sheet.setColumnWidth(5, 3000);  // Rol
+            sheet.setColumnWidth(0, 6000); // Nombre
+            sheet.setColumnWidth(1, 8000); // Email
+            sheet.setColumnWidth(2, 5000); // Username
+            sheet.setColumnWidth(3, 4500); // Documento
+            sheet.setColumnWidth(4, 4500); // Teléfono
+            sheet.setColumnWidth(5, 3000); // Rol
 
             workbook.write(baos);
             return baos.toByteArray();
@@ -804,7 +808,9 @@ public class UserService {
         }
     }
 
-    // ==================== REPORTE PDF INDIVIDUAL CON PROPIEDADES ====================
+    // ==================== REPORTE PDF INDIVIDUAL CON PROPIEDADES
+    // ====================
+    // ==================== REPORTE PDF INDIVIDUAL CON PROPIEDADES
 
     @Transactional(readOnly = true)
     public byte[] generateUserPdfReport(UUID userId) {
@@ -844,8 +850,8 @@ public class UserService {
                     .setMarginBottom(10);
             document.add(sectionTitle);
 
-            // Tabla de datos del usuario
-            float[] userWidths = {2, 4};
+            // Tabla de datos del usuario (formato clave-valor)
+            float[] userWidths = { 2, 4 };
             com.itextpdf.layout.element.Table userTable = new com.itextpdf.layout.element.Table(
                     UnitValue.createPercentArray(userWidths)).useAllAvailableWidth();
 
@@ -902,19 +908,74 @@ public class UserService {
                         .setItalic();
                 document.add(noProp);
             } else {
-                if (properties.isEmpty()) {
-                    Paragraph noProp = new Paragraph("No hay propiedades registradas.")
-                            .setFontSize(11)
-                            .setItalic();
-                    document.add(noProp);
-                } else {
-                    // Lista de propiedades
-                    for (com.inmobix.backend.model.Property prop : properties) {
-                        Paragraph propItem = new Paragraph("• " + prop.getTitle())
-                                .setFontSize(11)
-                                .setMarginLeft(20);
-                        document.add(propItem);
-                    }
+                int propIndex = 1;
+                for (com.inmobix.backend.model.Property prop : properties) {
+                    // Título de la propiedad
+                    Paragraph propTitle = new Paragraph("Propiedad #" + propIndex)
+                            .setFontSize(13)
+                            .setBold()
+                            .setFontColor(new DeviceRgb(39, 174, 96))
+                            .setMarginTop(15)
+                            .setMarginBottom(5);
+                    document.add(propTitle);
+
+                    // Tabla clave-valor para esta propiedad
+                    com.itextpdf.layout.element.Table propTable = new com.itextpdf.layout.element.Table(
+                            UnitValue.createPercentArray(userWidths)).useAllAvailableWidth();
+
+                    propTable.addCell(new com.itextpdf.layout.element.Cell()
+                            .add(new Paragraph("Título:").setBold()));
+                    propTable.addCell(new com.itextpdf.layout.element.Cell()
+                            .add(new Paragraph(prop.getTitle() != null ? prop.getTitle() : "N/A")));
+
+                    propTable.addCell(new com.itextpdf.layout.element.Cell()
+                            .add(new Paragraph("Descripción:").setBold()));
+                    propTable.addCell(new com.itextpdf.layout.element.Cell()
+                            .add(new Paragraph(prop.getDescription() != null ? prop.getDescription() : "N/A")));
+
+                    propTable.addCell(new com.itextpdf.layout.element.Cell()
+                            .add(new Paragraph("Tipo:").setBold()));
+                    propTable.addCell(new com.itextpdf.layout.element.Cell()
+                            .add(new Paragraph(
+                                    prop.getPropertyType() != null ? prop.getPropertyType().toString() : "N/A")));
+
+                    propTable.addCell(new com.itextpdf.layout.element.Cell()
+                            .add(new Paragraph("Precio:").setBold()));
+                    propTable.addCell(new com.itextpdf.layout.element.Cell()
+                            .add(new Paragraph(prop.getPrice() != null ? "$" + prop.getPrice().toString() : "N/A")));
+
+                    propTable.addCell(new com.itextpdf.layout.element.Cell()
+                            .add(new Paragraph("Área:").setBold()));
+                    propTable.addCell(new com.itextpdf.layout.element.Cell()
+                            .add(new Paragraph(prop.getArea() != null ? prop.getArea().toString() + " m²" : "N/A")));
+
+                    propTable.addCell(new com.itextpdf.layout.element.Cell()
+                            .add(new Paragraph("Dirección:").setBold()));
+                    propTable.addCell(new com.itextpdf.layout.element.Cell()
+                            .add(new Paragraph(prop.getAddress() != null ? prop.getAddress() : "N/A")));
+
+                    propTable.addCell(new com.itextpdf.layout.element.Cell()
+                            .add(new Paragraph("Ciudad:").setBold()));
+                    propTable.addCell(new com.itextpdf.layout.element.Cell()
+                            .add(new Paragraph(prop.getCity() != null ? prop.getCity() : "N/A")));
+
+                    propTable.addCell(new com.itextpdf.layout.element.Cell()
+                            .add(new Paragraph("Habitaciones:").setBold()));
+                    propTable.addCell(new com.itextpdf.layout.element.Cell()
+                            .add(new Paragraph(prop.getBedrooms() != null ? prop.getBedrooms().toString() : "N/A")));
+
+                    propTable.addCell(new com.itextpdf.layout.element.Cell()
+                            .add(new Paragraph("Baños:").setBold()));
+                    propTable.addCell(new com.itextpdf.layout.element.Cell()
+                            .add(new Paragraph(prop.getBathrooms() != null ? prop.getBathrooms().toString() : "N/A")));
+
+                    propTable.addCell(new com.itextpdf.layout.element.Cell()
+                            .add(new Paragraph("Estado:").setBold()));
+                    propTable.addCell(new com.itextpdf.layout.element.Cell()
+                            .add(new Paragraph(prop.getAvailable() != null ? prop.getAvailable().toString() : "N/A")));
+
+                    document.add(propTable);
+                    propIndex++;
                 }
             }
 
@@ -934,7 +995,8 @@ public class UserService {
         }
     }
 
-    // ==================== REPORTE EXCEL INDIVIDUAL CON PROPIEDADES ====================
+    // ==================== REPORTE EXCEL INDIVIDUAL CON PROPIEDADES
+    // ====================
 
     @Transactional(readOnly = true)
     public byte[] generateUserExcelReport(UUID userId) {
@@ -944,7 +1006,7 @@ public class UserService {
         List<com.inmobix.backend.model.Property> properties = propertyRepository.findByUserId(userId);
 
         try (XSSFWorkbook workbook = new XSSFWorkbook();
-             ByteArrayOutputStream baos = new ByteArrayOutputStream()) {
+                ByteArrayOutputStream baos = new ByteArrayOutputStream()) {
 
             Sheet sheet = workbook.createSheet("Usuario");
 
@@ -963,16 +1025,34 @@ public class UserService {
             Font sectionFont = workbook.createFont();
             sectionFont.setBold(true);
             sectionFont.setFontHeightInPoints((short) 12);
+            sectionFont.setColor(IndexedColors.WHITE.getIndex());
             sectionStyle.setFont(sectionFont);
             sectionStyle.setFillForegroundColor(IndexedColors.LIGHT_BLUE.getIndex());
             sectionStyle.setFillPattern(FillPatternType.SOLID_FOREGROUND);
+
+            CellStyle propTitleStyle = workbook.createCellStyle();
+            Font propTitleFont = workbook.createFont();
+            propTitleFont.setBold(true);
+            propTitleFont.setFontHeightInPoints((short) 11);
+            propTitleFont.setColor(IndexedColors.WHITE.getIndex());
+            propTitleStyle.setFont(propTitleFont);
+            propTitleStyle.setFillForegroundColor(IndexedColors.GREEN.getIndex());
+            propTitleStyle.setFillPattern(FillPatternType.SOLID_FOREGROUND);
 
             CellStyle labelStyle = workbook.createCellStyle();
             Font labelFont = workbook.createFont();
             labelFont.setBold(true);
             labelStyle.setFont(labelFont);
+            labelStyle.setBorderBottom(BorderStyle.THIN);
+            labelStyle.setBorderTop(BorderStyle.THIN);
+            labelStyle.setBorderLeft(BorderStyle.THIN);
+            labelStyle.setBorderRight(BorderStyle.THIN);
 
             CellStyle dataStyle = workbook.createCellStyle();
+            dataStyle.setBorderBottom(BorderStyle.THIN);
+            dataStyle.setBorderTop(BorderStyle.THIN);
+            dataStyle.setBorderLeft(BorderStyle.THIN);
+            dataStyle.setBorderRight(BorderStyle.THIN);
 
             // Título
             Row titleRow = sheet.createRow(0);
@@ -994,61 +1074,39 @@ public class UserService {
             org.apache.poi.ss.usermodel.Cell sectionCell = sectionRow.createCell(0);
             sectionCell.setCellValue("Datos del Usuario");
             sectionCell.setCellStyle(sectionStyle);
+            sectionRow.createCell(1).setCellStyle(sectionStyle);
             sheet.addMergedRegion(new CellRangeAddress(3, 3, 0, 1));
 
-            // Datos del usuario
+            // Datos del usuario (formato clave-valor)
             int rowNum = 4;
 
-            Row nameRow = sheet.createRow(rowNum++);
-            nameRow.createCell(0).setCellValue("Nombre:");
-            nameRow.getCell(0).setCellStyle(labelStyle);
-            nameRow.createCell(1).setCellValue(user.getName());
-            nameRow.getCell(1).setCellStyle(dataStyle);
-
-            Row emailRow = sheet.createRow(rowNum++);
-            emailRow.createCell(0).setCellValue("Email:");
-            emailRow.getCell(0).setCellStyle(labelStyle);
-            emailRow.createCell(1).setCellValue(user.getEmail());
-            emailRow.getCell(1).setCellStyle(dataStyle);
-
-            Row userRow = sheet.createRow(rowNum++);
-            userRow.createCell(0).setCellValue("Username:");
-            userRow.getCell(0).setCellStyle(labelStyle);
-            userRow.createCell(1).setCellValue(user.getUsername());
-            userRow.getCell(1).setCellStyle(dataStyle);
-
-            Row docRow = sheet.createRow(rowNum++);
-            docRow.createCell(0).setCellValue("Documento:");
-            docRow.getCell(0).setCellStyle(labelStyle);
-            docRow.createCell(1).setCellValue(user.getDocumento() != null ? user.getDocumento() : "N/A");
-            docRow.getCell(1).setCellStyle(dataStyle);
-
-            Row phoneRow = sheet.createRow(rowNum++);
-            phoneRow.createCell(0).setCellValue("Teléfono:");
-            phoneRow.getCell(0).setCellStyle(labelStyle);
-            phoneRow.createCell(1).setCellValue(user.getPhone() != null ? user.getPhone() : "N/A");
-            phoneRow.getCell(1).setCellStyle(dataStyle);
-
-            Row roleRow = sheet.createRow(rowNum++);
-            roleRow.createCell(0).setCellValue("Rol:");
-            roleRow.getCell(0).setCellStyle(labelStyle);
-            roleRow.createCell(1).setCellValue(user.getRole().name());
-            roleRow.getCell(1).setCellStyle(dataStyle);
+            rowNum = addKeyValueRow(sheet, rowNum, "Nombre:", user.getName(), labelStyle, dataStyle);
+            rowNum = addKeyValueRow(sheet, rowNum, "Email:", user.getEmail(), labelStyle, dataStyle);
+            rowNum = addKeyValueRow(sheet, rowNum, "Username:", user.getUsername(), labelStyle, dataStyle);
+            rowNum = addKeyValueRow(sheet, rowNum, "Documento:",
+                    user.getDocumento() != null ? user.getDocumento() : "N/A", labelStyle, dataStyle);
+            rowNum = addKeyValueRow(sheet, rowNum, "Teléfono:", user.getPhone() != null ? user.getPhone() : "N/A",
+                    labelStyle, dataStyle);
+            rowNum = addKeyValueRow(sheet, rowNum, "Rol:", user.getRole().name(), labelStyle, dataStyle);
 
             // Sección: Propiedades
             rowNum += 2;
-            Row propSectionRow = sheet.createRow(rowNum++);
+            Row propSectionRow = sheet.createRow(rowNum);
             org.apache.poi.ss.usermodel.Cell propSectionCell = propSectionRow.createCell(0);
             propSectionCell.setCellValue("Propiedades Asociadas");
             propSectionCell.setCellStyle(sectionStyle);
-            sheet.addMergedRegion(new CellRangeAddress(rowNum - 1, rowNum - 1, 0, 1));
+            propSectionRow.createCell(1).setCellStyle(sectionStyle);
+            sheet.addMergedRegion(new CellRangeAddress(rowNum, rowNum, 0, 1));
+            rowNum++;
 
-            Row countRow = sheet.createRow(rowNum++);
+            Row countRow = sheet.createRow(rowNum);
             countRow.createCell(0).setCellValue("Total: " + properties.size() + " propiedades");
-            sheet.addMergedRegion(new CellRangeAddress(rowNum - 1, rowNum - 1, 0, 1));
+            sheet.addMergedRegion(new CellRangeAddress(rowNum, rowNum, 0, 1));
+            rowNum++;
 
             if (properties.isEmpty()) {
-                Row noPropRow = sheet.createRow(rowNum++);
+                rowNum++;
+                Row noPropRow = sheet.createRow(rowNum);
                 org.apache.poi.ss.usermodel.Cell noPropCell = noPropRow.createCell(0);
                 noPropCell.setCellValue("No hay propiedades registradas.");
                 CellStyle italicStyle = workbook.createCellStyle();
@@ -1057,17 +1115,52 @@ public class UserService {
                 italicStyle.setFont(italicFont);
                 noPropCell.setCellStyle(italicStyle);
             } else {
-                rowNum++;
+                int propIndex = 1;
                 for (com.inmobix.backend.model.Property prop : properties) {
-                    Row propRow = sheet.createRow(rowNum++);
-                    propRow.createCell(0).setCellValue("• " + prop.getTitle());
-                    sheet.addMergedRegion(new CellRangeAddress(rowNum - 1, rowNum - 1, 0, 1));
+                    rowNum += 2;
+
+                    // Título de la propiedad
+                    Row propHeaderRow = sheet.createRow(rowNum);
+                    org.apache.poi.ss.usermodel.Cell propHeaderCell = propHeaderRow.createCell(0);
+                    propHeaderCell.setCellValue("Propiedad #" + propIndex);
+                    propHeaderCell.setCellStyle(propTitleStyle);
+                    propHeaderRow.createCell(1).setCellStyle(propTitleStyle);
+                    sheet.addMergedRegion(new CellRangeAddress(rowNum, rowNum, 0, 1));
+                    rowNum++;
+
+                    // Datos de la propiedad (formato clave-valor)
+                    rowNum = addKeyValueRow(sheet, rowNum, "Título:", prop.getTitle() != null ? prop.getTitle() : "N/A",
+                            labelStyle, dataStyle);
+                    rowNum = addKeyValueRow(sheet, rowNum, "Descripción:",
+                            prop.getDescription() != null ? prop.getDescription() : "N/A", labelStyle, dataStyle);
+                    rowNum = addKeyValueRow(sheet, rowNum, "Tipo:",
+                            prop.getPropertyType() != null ? prop.getPropertyType().toString() : "N/A", labelStyle,
+                            dataStyle);
+                    rowNum = addKeyValueRow(sheet, rowNum, "Precio:",
+                            prop.getPrice() != null ? "$" + String.format("%,.2f", prop.getPrice()) : "N/A", labelStyle,
+                            dataStyle);
+                    rowNum = addKeyValueRow(sheet, rowNum, "Área:",
+                            prop.getArea() != null ? prop.getArea() + " m²" : "N/A", labelStyle, dataStyle);
+                    rowNum = addKeyValueRow(sheet, rowNum, "Dirección:",
+                            prop.getAddress() != null ? prop.getAddress() : "N/A", labelStyle, dataStyle);
+                    rowNum = addKeyValueRow(sheet, rowNum, "Ciudad:", prop.getCity() != null ? prop.getCity() : "N/A",
+                            labelStyle, dataStyle);
+                    rowNum = addKeyValueRow(sheet, rowNum, "Habitaciones:",
+                            prop.getBedrooms() != null ? prop.getBedrooms().toString() : "N/A", labelStyle, dataStyle);
+                    rowNum = addKeyValueRow(sheet, rowNum, "Baños:",
+                            prop.getBathrooms() != null ? prop.getBathrooms().toString() : "N/A", labelStyle,
+                            dataStyle);
+                    rowNum = addKeyValueRow(sheet, rowNum, "Estado:",
+                            prop.getAvailable() != null ? (prop.getAvailable() ? "Si" : "No") : "N/A", labelStyle,
+                            dataStyle);
+
+                    propIndex++;
                 }
             }
 
             // Ajustar anchos
             sheet.setColumnWidth(0, 5000);
-            sheet.setColumnWidth(1, 10000);
+            sheet.setColumnWidth(1, 12000);
 
             workbook.write(baos);
             return baos.toByteArray();
@@ -1075,5 +1168,19 @@ public class UserService {
         } catch (Exception e) {
             throw new RuntimeException("Error al generar reporte Excel: " + e.getMessage(), e);
         }
+    }
+
+    private int addKeyValueRow(Sheet sheet, int rowNum, String label, String value, CellStyle labelStyle,
+            CellStyle dataStyle) {
+        Row row = sheet.createRow(rowNum);
+        org.apache.poi.ss.usermodel.Cell labelCell = row.createCell(0);
+        labelCell.setCellValue(label);
+        labelCell.setCellStyle(labelStyle);
+
+        org.apache.poi.ss.usermodel.Cell valueCell = row.createCell(1);
+        valueCell.setCellValue(value);
+        valueCell.setCellStyle(dataStyle);
+
+        return rowNum + 1;
     }
 }
