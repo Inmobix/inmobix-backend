@@ -26,8 +26,7 @@ public class EmailService {
             throw new IllegalStateException(
                     "POSTMARK_API_TOKEN no está configurado. " +
                             "Por favor configura la variable de entorno POSTMARK_API_TOKEN o " +
-                            "agrega 'postmark.api.token' en application.properties"
-            );
+                            "agrega 'postmark.api.token' en application.properties");
         }
         this.postmarkClient = Postmark.getApiClient(apiToken);
         System.out.println("✅ EmailService inicializado correctamente con Postmark");
@@ -46,8 +45,8 @@ public class EmailService {
                     fromName + " <" + fromEmail + ">",
                     to,
                     subject,
-                    textBody,   // Texto plano
-                    cleanHtml   // HTML limpio
+                    textBody, // Texto plano
+                    cleanHtml // HTML limpio
             );
 
             // Configurar Reply-To
@@ -61,8 +60,8 @@ public class EmailService {
             System.out.println("✅ Email enviado exitosamente - MessageID: " + response.getMessageId());
 
         } catch (PostmarkException | IOException e) {
-            System.err.println("❌ Error al enviar correo: " + e.getMessage());
-            throw new RuntimeException("Error al enviar correo: " + e.getMessage(), e);
+            System.err.println("⚠️ Error al enviar correo (continuando): " + e.getMessage());
+            // No lanzar excepción para permitir que el registro continúe
         }
     }
 
@@ -104,26 +103,24 @@ public class EmailService {
                     subject, code
             );
         } else if (subject.contains("verificada") || subject.contains("Verificación Exitosa")) {
-            return
-                    "Inmobix - Cuenta Verificada\n\n" +
-                            "¡Excelentes noticias! Tu cuenta ha sido verificada exitosamente.\n\n" +
-                            "✓ Tu email está confirmado\n" +
-                            "✓ Ya puedes iniciar sesión\n" +
-                            "✓ Tu cuenta está activa\n\n" +
-                            "Ahora puedes acceder a todas las funcionalidades de Inmobix.\n\n" +
-                            "¡Bienvenido a la comunidad Inmobix!\n\n" +
-                            "Equipo de Inmobix";
+            return "Inmobix - Cuenta Verificada\n\n" +
+                    "¡Excelentes noticias! Tu cuenta ha sido verificada exitosamente.\n\n" +
+                    "✓ Tu email está confirmado\n" +
+                    "✓ Ya puedes iniciar sesión\n" +
+                    "✓ Tu cuenta está activa\n\n" +
+                    "Ahora puedes acceder a todas las funcionalidades de Inmobix.\n\n" +
+                    "¡Bienvenido a la comunidad Inmobix!\n\n" +
+                    "Equipo de Inmobix";
         } else if (subject.contains("Contraseña actualizada")) {
-            return
-                    "Inmobix - Contraseña Actualizada\n\n" +
-                            "Tu contraseña ha sido restablecida exitosamente.\n\n" +
-                            "✓ Contraseña actualizada\n" +
-                            "✓ Tu cuenta está segura\n\n" +
-                            "Ya puedes iniciar sesión con tu nueva contraseña.\n\n" +
-                            "⚠️ AVISO DE SEGURIDAD:\n" +
-                            "Si no solicitaste este cambio, tu cuenta podría estar comprometida.\n" +
-                            "Por favor, contacta a soporte inmediatamente.\n\n" +
-                            "Equipo de Inmobix";
+            return "Inmobix - Contraseña Actualizada\n\n" +
+                    "Tu contraseña ha sido restablecida exitosamente.\n\n" +
+                    "✓ Contraseña actualizada\n" +
+                    "✓ Tu cuenta está segura\n\n" +
+                    "Ya puedes iniciar sesión con tu nueva contraseña.\n\n" +
+                    "⚠️ AVISO DE SEGURIDAD:\n" +
+                    "Si no solicitaste este cambio, tu cuenta podría estar comprometida.\n" +
+                    "Por favor, contacta a soporte inmediatamente.\n\n" +
+                    "Equipo de Inmobix";
         } else {
             // Fallback genérico
             return subject + "\n\nMensaje de Inmobix.\n\nRevisa este correo en un cliente que soporte HTML.";

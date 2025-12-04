@@ -80,7 +80,8 @@ public class PropertyController {
         return ResponseEntity.ok(propertyService.getByPropertyType(propertyType));
     }
 
-    // GET /api/properties/transaction/{transactionType} - Buscar por tipo de transacción
+    // GET /api/properties/transaction/{transactionType} - Buscar por tipo de
+    // transacción
     @GetMapping("/transaction/{transactionType}")
     public ResponseEntity<List<PropertyResponse>> getPropertiesByTransaction(@PathVariable String transactionType) {
         return ResponseEntity.ok(propertyService.getByTransactionType(transactionType));
@@ -98,6 +99,39 @@ public class PropertyController {
     @GetMapping("/user/{userId}")
     public ResponseEntity<List<PropertyResponse>> getPropertiesByUser(@PathVariable UUID userId) {
         return ResponseEntity.ok(propertyService.getByUserId(userId));
+    }
+
+    // GET /api/properties/report/pdf - Generar reporte PDF de propiedades
+    @GetMapping("/report/pdf")
+    public ResponseEntity<byte[]> generatePropertiesPdfReport() {
+        byte[] pdfBytes = propertyService.generatePdfReport();
+
+        org.springframework.http.HttpHeaders headers = new org.springframework.http.HttpHeaders();
+        headers.setContentType(org.springframework.http.MediaType.APPLICATION_PDF);
+        headers.setContentDispositionFormData("attachment",
+                "reporte_propiedades_" + java.time.LocalDateTime.now().format(
+                        java.time.format.DateTimeFormatter.ofPattern("yyyyMMdd_HHmmss")) + ".pdf");
+
+        return ResponseEntity.ok()
+                .headers(headers)
+                .body(pdfBytes);
+    }
+
+    // GET /api/properties/report/excel - Generar reporte Excel de propiedades
+    @GetMapping("/report/excel")
+    public ResponseEntity<byte[]> generatePropertiesExcelReport() {
+        byte[] excelBytes = propertyService.generateExcelReport();
+
+        org.springframework.http.HttpHeaders headers = new org.springframework.http.HttpHeaders();
+        headers.setContentType(org.springframework.http.MediaType.parseMediaType(
+                "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"));
+        headers.setContentDispositionFormData("attachment",
+                "reporte_propiedades_" + java.time.LocalDateTime.now().format(
+                        java.time.format.DateTimeFormatter.ofPattern("yyyyMMdd_HHmmss")) + ".xlsx");
+
+        return ResponseEntity.ok()
+                .headers(headers)
+                .body(excelBytes);
     }
 
 }
